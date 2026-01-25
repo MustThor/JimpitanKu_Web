@@ -1,0 +1,318 @@
+
+# 🗄️ ERD Database - Sistem Jimpitan RT/RW
+
+> Entity Relationship Diagram untuk aplikasi manajemen iuran jimpitan komunitas RT/RW menggunakan Next.js dan Supabase.
+
+---
+
+## 📋 Deskripsi
+
+Database ini dirancang untuk menyimpan dan mengelola data iuran jimpitan warga RT/RW. Sistem menggunakan **PostgreSQL** melalui **Supabase** dengan model **single user** (tanpa pembagian role/permission).
+
+### Karakteristik Database:
+- **Engine**: PostgreSQL (via Supabase)
+- **Primary Key**: UUID v4
+- **Timestamps**: timestamptz (timezone aware)
+- **Currency**: Integer (dalam Rupiah, tanpa desimal)
+
+---
+
+## 📊 Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    WARGA {
+        uuid id PK "Primary Key"
+        string nama "Nama Lengkap"
+        string alamat "Alamat RT/RW"
+        string no_rumah "Nomor Rumah"
+        string no_telepon "No. HP (opsional)"
+        boolean status_aktif "Status Keanggotaan"
+        timestamptz created_at "Tanggal Daftar"
+        timestamptz updated_at "Terakhir Diubah"
+    }
+
+    TRANSAKSI {
+        uuid id PK "Primary Key"
+        uuid warga_id FK "Foreign Key ke WARGA"
+        date tanggal "Tanggal Pembayaran"
+        integer jumlah "Nominal (Rupiah)"
+        text keterangan "Catatan/Keterangan"
+        timestamptz created_at "Waktu Input"
+    }
+
+    PENGELUARAN {
+        uuid id PK "Primary Key"
+        date tanggal "Tanggal Pengeluaran"
+        integer jumlah "Nominal (Rupiah)"
+        string kategori "Kategori Pengeluaran"
+        text keterangan "Deskripsi Pengeluaran"
+        timestamptz created_at "Waktu Input"
+    }
+
+    LAPORAN {
+        uuid id PK "Primary Key"
+        date periode_mulai "Tanggal Awal Periode"
+        date periode_akhir "Tanggal Akhir Periode"
+        integer total_pemasukan "Total Pemasukan (Rupiah)"
+        integer total_pengeluaran "Total Pengeluaran (Rupiah)"
+        integer saldo_awal "Saldo Awal Periode"
+        integer saldo_akhir "Saldo Akhir Periode"
+        timestamptz created_at "Tanggal Generate"
+    }
+
+    PENGATURAN {
+        uuid id PK "Primary Key"
+        string key UK "Kunci Pengaturan (unique)"
+        text value "Nilai Pengaturan"
+        timestamptz updated_at "Terakhir Diubah"
+    }
+
+    BACKUP_HISTORY {
+        uuid id PK "Primary Key"
+        string nama_file "Nama File Backup"
+        integer ukuran "Ukuran File (bytes)"
+        string tipe "Tipe: manual/auto"
+        timestamptz created_at "Waktu Backup"
+    }
+
+    %% Relationships
+    WARGA ||--o{ TRANSAKSI : "membayar"
+    TRANSAKSI }o--o| LAPORAN : "dirangkum dalam"
+    PENGELUARAN }o--o| LAPORAN : "dirangkum dalam"
+```
+
+---
+
+## 📑 Deskripsi Tabel
+
+### 1. `warga` - Data Warga RT/RW
+
+Menyimpan informasi warga yang terdaftar dalam sistem jimpitan.
+
+| Kolom | Tipe | Constraint | Deskripsi |
+|-------|------|------------|-----------|
+| `id` | `uuid` | PRIMARY KEY, DEFAULT uuid_generate_v4() | ID unik warga |
+| `nama` | `varchar(255)` | NOT NULL | Nama lengkap warga |
+| `alamat` | `varchar(255)` | NOT NULL | Alamat (RT/RW) |
+| `no_rumah` | `varchar(50)` | NOT NULL | Nomor rumah |
+| `no_telepon` | `varchar(20)` | NULL | Nomor HP (opsional) |
+| `status_aktif` | `boolean` | DEFAULT true | Status keanggotaan aktif |
+| `created_at` | `timestamptz` | DEFAULT now() | Waktu pendaftaran |
+| `updated_at` | `timestamptz` | DEFAULT now() | Waktu update terakhir |
+
+**Index**: `idx_warga_nama` pada kolom `nama`
+
+---
+
+### 2. `transaksi` - Catatan Pembayaran Jimpitan
+
+Menyimpan setiap pembayaran iuran jimpitan dari warga.
+
+| Kolom | Tipe | Constraint | Deskripsi |
+|-------|------|------------|-----------|
+| `id` | `uuid` | PRIMARY KEY, DEFAULT uuid_generate_v4() | ID unik transaksi |
+| `warga_id` | `uuid` | FOREIGN KEY REFERENCES warga(id) | ID warga yang membayar |
+| `tanggal` | `date` | NOT NULL | Tanggal pembayaran |
+| `jumlah` | `integer` | NOT NULL, CHECK (jumlah > 0) | Nominal dalam Rupiah |
+| `keterangan` | `text` | NULL | Catatan tambahan |
+| `created_at` | `timestamptz` | DEFAULT now() | Waktu input data |
+
+**Index**: 
+- `idx_transaksi_warga_id` pada kolom `warga_id`
+- `idx_transaksi_tanggal` pada kolom `tanggal`
+
+**Foreign Key**: `warga_id` → `warga(id)` ON DELETE CASCADE
+
+---
+
+### 3. `pengeluaran` - Catatan Pengeluaran Kas
+
+Menyimpan penggunaan dana kas untuk keperluan RT/RW.
+
+| Kolom | Tipe | Constraint | Deskripsi |
+|-------|------|------------|-----------|
+| `id` | `uuid` | PRIMARY KEY, DEFAULT uuid_generate_v4() | ID unik pengeluaran |
+| `tanggal` | `date` | NOT NULL | Tanggal pengeluaran |
+| `jumlah` | `integer` | NOT NULL, CHECK (jumlah > 0) | Nominal dalam Rupiah |
+| `kategori` | `varchar(100)` | NOT NULL | Kategori pengeluaran |
+| `keterangan` | `text` | NULL | Deskripsi pengeluaran |
+| `created_at` | `timestamptz` | DEFAULT now() | Waktu input data |
+
+**Index**: `idx_pengeluaran_tanggal` pada kolom `tanggal`
+
+**Kategori Pengeluaran**:
+- `kebersihan` - Biaya kebersihan lingkungan
+- `keamanan` - Biaya keamanan/ronda
+- `sosial` - Bantuan sosial warga
+- `infrastruktur` - Perbaikan fasilitas
+- `acara` - Kegiatan RT/RW
+- `lainnya` - Pengeluaran lain-lain
+
+---
+
+### 4. `laporan` - Rekapitulasi Keuangan
+
+Menyimpan laporan keuangan yang di-generate per periode.
+
+| Kolom | Tipe | Constraint | Deskripsi |
+|-------|------|------------|-----------|
+| `id` | `uuid` | PRIMARY KEY, DEFAULT uuid_generate_v4() | ID unik laporan |
+| `periode_mulai` | `date` | NOT NULL | Tanggal awal periode |
+| `periode_akhir` | `date` | NOT NULL | Tanggal akhir periode |
+| `total_pemasukan` | `integer` | NOT NULL, DEFAULT 0 | Total pemasukan periode |
+| `total_pengeluaran` | `integer` | NOT NULL, DEFAULT 0 | Total pengeluaran periode |
+| `saldo_awal` | `integer` | NOT NULL, DEFAULT 0 | Saldo di awal periode |
+| `saldo_akhir` | `integer` | NOT NULL, DEFAULT 0 | Saldo di akhir periode |
+| `created_at` | `timestamptz` | DEFAULT now() | Waktu generate laporan |
+
+**Constraint**: CHECK (periode_akhir >= periode_mulai)
+
+---
+
+### 5. `pengaturan` - Konfigurasi Aplikasi
+
+Menyimpan pengaturan aplikasi dalam format key-value.
+
+| Kolom | Tipe | Constraint | Deskripsi |
+|-------|------|------------|-----------|
+| `id` | `uuid` | PRIMARY KEY, DEFAULT uuid_generate_v4() | ID unik pengaturan |
+| `key` | `varchar(100)` | UNIQUE, NOT NULL | Kunci pengaturan |
+| `value` | `text` | NOT NULL | Nilai pengaturan |
+| `updated_at` | `timestamptz` | DEFAULT now() | Waktu update terakhir |
+
+**Default Settings**:
+| Key | Default Value | Deskripsi |
+|-----|---------------|-----------|
+| `nominal_iuran` | `5000` | Nominal iuran per minggu (Rp) |
+| `nama_rt` | `RT 001 RW 002` | Nama RT/RW |
+| `alamat_rt` | `Kelurahan ...` | Alamat lengkap |
+| `theme` | `light` | Tema aplikasi (light/dark) |
+
+---
+
+### 6. `backup_history` - Riwayat Backup
+
+Menyimpan catatan setiap backup yang dilakukan.
+
+| Kolom | Tipe | Constraint | Deskripsi |
+|-------|------|------------|-----------|
+| `id` | `uuid` | PRIMARY KEY, DEFAULT uuid_generate_v4() | ID unik backup |
+| `nama_file` | `varchar(255)` | NOT NULL | Nama file backup |
+| `ukuran` | `integer` | NOT NULL | Ukuran file dalam bytes |
+| `tipe` | `varchar(20)` | NOT NULL, CHECK (tipe IN ('manual', 'auto')) | Tipe backup |
+| `created_at` | `timestamptz` | DEFAULT now() | Waktu backup |
+
+**Format Nama File**: `backup_YYYYMMDD_HHmmss.json`
+
+---
+
+## 🔗 Relasi Antar Tabel
+
+### 1. WARGA → TRANSAKSI (One-to-Many)
+```
+Satu WARGA dapat memiliki banyak TRANSAKSI pembayaran jimpitan.
+```
+- **Kardinalitas**: 1:N (One-to-Many)
+- **Foreign Key**: `transaksi.warga_id` → `warga.id`
+- **On Delete**: CASCADE (hapus warga = hapus semua transaksinya)
+
+### 2. TRANSAKSI → LAPORAN (Many-to-Optional)
+```
+Banyak TRANSAKSI dapat dirangkum dalam satu LAPORAN periode.
+```
+- **Kardinalitas**: N:1 (Many-to-One, optional)
+- **Relasi**: Tidak menggunakan FK langsung, dihitung berdasarkan tanggal
+
+### 3. PENGELUARAN → LAPORAN (Many-to-Optional)
+```
+Banyak PENGELUARAN dapat dirangkum dalam satu LAPORAN periode.
+```
+- **Kardinalitas**: N:1 (Many-to-One, optional)
+- **Relasi**: Tidak menggunakan FK langsung, dihitung berdasarkan tanggal
+
+---
+
+## 📐 Diagram Relasi Sederhana
+
+```
+┌─────────────┐       ┌──────────────┐
+│   WARGA     │       │  PENGATURAN  │
+│─────────────│       │──────────────│
+│ id (PK)     │       │ id (PK)      │
+│ nama        │       │ key (UK)     │
+│ alamat      │       │ value        │
+│ no_rumah    │       └──────────────┘
+│ status_aktif│
+└──────┬──────┘       ┌──────────────┐
+       │              │BACKUP_HISTORY│
+       │ 1:N          │──────────────│
+       │              │ id (PK)      │
+       ▼              │ nama_file    │
+┌─────────────┐       │ ukuran       │
+│ TRANSAKSI   │       │ tipe         │
+│─────────────│       └──────────────┘
+│ id (PK)     │
+│ warga_id(FK)│───┐
+│ tanggal     │   │
+│ jumlah      │   │    ┌─────────────┐
+└─────────────┘   │    │  LAPORAN    │
+                  │    │─────────────│
+                  ├───▶│ id (PK)     │
+                  │    │ periode_*   │
+┌─────────────┐   │    │ total_*     │
+│ PENGELUARAN │   │    │ saldo_*     │
+│─────────────│   │    └─────────────┘
+│ id (PK)     │───┘
+│ tanggal     │
+│ jumlah      │
+│ kategori    │
+└─────────────┘
+```
+
+---
+
+## 🔒 Keamanan Data
+
+### Row Level Security (RLS)
+Untuk model single user, RLS bersifat sederhana:
+
+```sql
+-- Semua user terautentikasi bisa akses semua data
+ALTER TABLE warga ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all for authenticated" ON warga
+    FOR ALL USING (auth.role() = 'authenticated');
+```
+
+### Validasi Data
+- Semua `jumlah` harus positif (CHECK constraint)
+- `tanggal` tidak boleh di masa depan
+- `email` harus format valid (jika ada)
+
+---
+
+## 📝 Catatan Implementasi
+
+1. **UUID vs Auto Increment**: Menggunakan UUID untuk keamanan dan kemudahan sinkronisasi data antar device.
+
+2. **Soft Delete**: Tidak diimplementasikan. Data yang dihapus akan benar-benar terhapus (CASCADE).
+
+3. **Audit Trail**: Menggunakan `created_at` dan `updated_at` untuk tracking perubahan.
+
+4. **Currency**: Disimpan sebagai `integer` dalam satuan Rupiah (tanpa desimal) untuk menghindari floating point issues.
+
+5. **Timezone**: Semua timestamp menggunakan `timestamptz` (UTC) untuk konsistensi.
+
+---
+
+## 🛠️ Tools yang Digunakan
+
+- **Database**: Supabase PostgreSQL
+- **ORM**: Supabase Client SDK (auto-generated types)
+- **Migration**: Supabase CLI
+- **Diagram**: Mermaid.js
+
+---
+
+*Dokumentasi ini dibuat untuk proyek Jimpitan RT/RW dengan Next.js 14 + Supabase.*
+*Last updated: 2025*
