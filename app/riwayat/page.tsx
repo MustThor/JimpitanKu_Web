@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, ChevronLeft, ChevronRight, FileText, Table } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,7 @@ import { useJimpitan } from '@/hooks/useJimpitan';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { MENU_ITEMS, MONTHS, ITEMS_PER_PAGE } from '@/lib/constants';
 import { formatRupiah, formatShortDate } from '@/lib/utils/format';
+import { exportToPDF, exportToExcel } from '@/lib/utils/export';
 
 export default function RiwayatPage() {
   const { darkMode, toggleTheme } = useTheme();
@@ -48,6 +49,22 @@ export default function RiwayatPage() {
         alert(result.error || 'Gagal menghapus data');
       }
     }
+  };
+
+  const handleExportPDF = () => {
+    if (filteredData.length === 0) {
+      alert('Tidak ada data untuk diekspor');
+      return;
+    }
+    exportToPDF(filteredData, filterMonth, filterYear, appName);
+  };
+
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) {
+      alert('Tidak ada data untuk diekspor');
+      return;
+    }
+    exportToExcel(filteredData, filterMonth, filterYear);
   };
 
   const monthOptions = MONTHS.map((month, index) => ({
@@ -111,6 +128,24 @@ export default function RiwayatPage() {
                       }}
                       options={yearOptions}
                     />
+                  </div>
+                  <div className="flex gap-2 items-end">
+                    <Button
+                      onClick={handleExportPDF}
+                      disabled={filteredData.length === 0}
+                      className="flex items-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      PDF
+                    </Button>
+                    <Button
+                      onClick={handleExportExcel}
+                      disabled={filteredData.length === 0}
+                      className="flex items-center gap-2"
+                    >
+                      <Table className="w-4 h-4" />
+                      Excel
+                    </Button>
                   </div>
                 </div>
 

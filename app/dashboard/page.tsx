@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DollarSign, Calendar, TrendingUp, Plus } from 'lucide-react';
+import { DollarSign, Calendar, TrendingUp, Plus, FileText, Table } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -16,6 +16,7 @@ import { useAppSettings } from '@/hooks/useAppSettings';
 import { MENU_ITEMS } from '@/lib/constants';
 import { formatRupiah, formatShortDate } from '@/lib/utils/format';
 import { validateJimpitanInput } from '@/lib/utils/validation';
+import { exportWeeklySummaryToPDF, exportWeeklySummaryToExcel } from '@/lib/utils/export';
 
 export default function DashboardPage() {
   const { darkMode, toggleTheme } = useTheme();
@@ -85,6 +86,22 @@ export default function DashboardPage() {
     }
   };
 
+  const handleExportWeeklyPDF = () => {
+    if (weeklyChartData.length === 0) {
+      alert('Tidak ada data untuk diekspor');
+      return;
+    }
+    exportWeeklySummaryToPDF(weeklyChartData, currentMonth, currentYear, appName);
+  };
+
+  const handleExportWeeklyExcel = () => {
+    if (weeklyChartData.length === 0) {
+      alert('Tidak ada data untuk diekspor');
+      return;
+    }
+    exportWeeklySummaryToExcel(weeklyChartData, currentMonth, currentYear);
+  };
+
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <Sidebar
@@ -138,9 +155,33 @@ export default function DashboardPage() {
               </div>
 
               <div className={`p-6 rounded-2xl shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <h3 className={`text-lg font-semibold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Grafik Pemasukan Mingguan - {MENU_ITEMS[0].label}
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Grafik Pemasukan Mingguan - {MENU_ITEMS[0].label}
+                  </h3>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleExportWeeklyPDF}
+                      disabled={weeklyChartData.length === 0}
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      PDF
+                    </Button>
+                    <Button
+                      onClick={handleExportWeeklyExcel}
+                      disabled={weeklyChartData.length === 0}
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Table className="w-4 h-4" />
+                      Excel
+                    </Button>
+                  </div>
+                </div>
                 <WeeklyChart data={weeklyChartData} darkMode={darkMode} />
               </div>
 
