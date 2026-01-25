@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Jimpitan RT/RW',
-  description: 'Sistem pencatatan jimpitan komunitas RT/RW',
+  title: 'Jimpitan Angsana Residence',
+  description: 'Sistem pencatatan jimpitan Angsana Residence',
 };
 
 export default function RootLayout({
