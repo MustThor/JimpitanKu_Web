@@ -8,6 +8,10 @@ console.log('[Supabase Client] Initializing with:', {
   urlLength: supabaseUrl?.length,
   hasAnonKey: !!supabaseAnonKey,
   anonKeyLength: supabaseAnonKey?.length,
+  isProduction: supabaseUrl?.includes('aoyitixilizhbisdjamy'),
+  isDevelopment: supabaseUrl?.includes('jiiubrcdihxlhuaacpdb'),
+  nodeEnv: process.env.NODE_ENV,
+  enableAuth: process.env.NEXT_PUBLIC_ENABLE_AUTH,
   timestamp: new Date().toISOString()
 });
 

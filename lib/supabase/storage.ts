@@ -13,12 +13,16 @@ export async function uploadJimpitanPhoto(
   jimpitanId: string
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
-    // DEBUG: Log authentication status
+    // DEBUG: Log environment and authentication status
     const { data: { session } } = await supabase.auth.getSession();
-    console.log('[DEBUG] Upload photo - Auth status:', {
+    console.log('[DEBUG] Upload photo - Environment & Auth status:', {
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      isProduction: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('aoyitixilizhbisdjamy'),
       hasSession: !!session,
       userId: session?.user?.id,
-      bucketName: BUCKET_NAME
+      userEmail: session?.user?.email,
+      bucketName: BUCKET_NAME,
+      fileName: `${jimpitanId}_${Date.now()}.${file.name.split('.').pop()}`
     });
 
     // Validate file type
@@ -57,7 +61,17 @@ export async function uploadJimpitanPhoto(
         upsert: false,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('[DEBUG] Upload error details:', {
+        message: uploadError.message,
+        statusCode: (uploadError as any).statusCode,
+        name: uploadError.name,
+        error: uploadError,
+        fileName,
+        bucketName: BUCKET_NAME
+      });
+      throw uploadError;
+    }
 
     // Get public URL
     const { data: urlData } = supabase.storage
