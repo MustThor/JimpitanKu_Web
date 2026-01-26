@@ -8,8 +8,8 @@ export const validateJimpitanInput = (data: {
 
   // Validate amount
   const amount = typeof data.amount === 'string' ? parseInt(data.amount, 10) : data.amount;
-  if (!data.amount || isNaN(amount) || amount <= 0) {
-    errors.amount = 'Jumlah harus lebih dari 0';
+  if (data.amount === '' || isNaN(amount) || amount < 0) {
+    errors.amount = 'Jumlah tidak boleh negatif';
   }
 
   // Validate collection_date
@@ -64,8 +64,8 @@ export const validateSettingsInput = (data: {
   // Validate nominal_default
   if (data.nominal_default !== undefined) {
     const nominal = parseInt(data.nominal_default, 10);
-    if (isNaN(nominal) || nominal <= 0) {
-      errors.nominal_default = 'Nominal default harus lebih dari 0';
+    if (isNaN(nominal) || nominal < 0) {
+      errors.nominal_default = 'Nominal default tidak boleh negatif';
     }
   }
 

@@ -51,21 +51,40 @@ export function useJimpitan() {
       }
 
       // Insert jimpitan record
+      const insertData = {
+        amount: input.amount,
+        collection_date: input.collection_date,
+        week_number: getWeekNumber(date),
+        month: getMonthAndYear(date).month,
+        year: getMonthAndYear(date).year,
+        notes: input.notes || null,
+        photo_url: photoUrl,
+      };
+
+      console.log('[DEBUG] Inserting jimpitan data:', {
+        insertData,
+        input,
+        photoUrl,
+        date: date.toISOString(),
+        weekNumber: getWeekNumber(date),
+        monthYear: getMonthAndYear(date)
+      });
+
       const { data: newJimpitan, error: insertError } = await supabase
         .from('jimpitan')
-        .insert({
-          amount: input.amount,
-          collection_date: input.collection_date,
-          week_number: getWeekNumber(date),
-          month: getMonthAndYear(date).month,
-          year: getMonthAndYear(date).year,
-          notes: input.notes || null,
-          photo_url: photoUrl,
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (insertError) {
+        console.error('[DEBUG] Insert error details:', {
+          message: insertError.message,
+          code: insertError.code,
+          details: insertError.details,
+          hint: insertError.hint,
+          insertData
+        });
+
         // Delete uploaded photo if database insert fails
         if (photoUrl) {
           await deleteJimpitanPhoto(photoUrl);

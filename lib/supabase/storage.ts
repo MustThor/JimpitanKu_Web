@@ -18,11 +18,13 @@ export async function uploadJimpitanPhoto(
     console.log('[DEBUG] Upload photo - Environment & Auth status:', {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
       isProduction: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('aoyitixilizhbisdjamy'),
+      isDevelopment: process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('jiiubrcdihxlhuaacpdb'),
       hasSession: !!session,
       userId: session?.user?.id,
       userEmail: session?.user?.email,
       bucketName: BUCKET_NAME,
-      fileName: `${jimpitanId}_${Date.now()}.${file.name.split('.').pop()}`
+      fileName: `${jimpitanId}_${Date.now()}.${file.name.split('.').pop()}`,
+      enableAuth: process.env.NEXT_PUBLIC_ENABLE_AUTH
     });
 
     // Validate file type
