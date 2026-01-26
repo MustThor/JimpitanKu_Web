@@ -19,9 +19,18 @@ export function LoginForm() {
     setError(null);
     setLoading(true);
 
+    console.log('[LoginForm] Submitting login form:', {
+      email: email,
+      emailLength: email.length,
+      emailTrimmed: email.trim(),
+      passwordLength: password.length,
+      timestamp: new Date().toISOString()
+    });
+
     const { error: signInError } = await signIn(email, password);
 
     if (signInError) {
+      console.error('[LoginForm] Login failed:', signInError);
       setError(signInError);
       setLoading(false);
     } else {

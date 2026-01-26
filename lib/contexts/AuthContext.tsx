@@ -81,9 +81,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('[AuthContext] signIn attempt:', {
+        email: email,
+        emailLength: email.length,
+        emailTrimmed: email.trim(),
+        passwordLength: password.length,
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        timestamp: new Date().toISOString()
+      });
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+      });
+
+      console.log('[AuthContext] signIn response:', {
+        error: error ? error.message : null,
+        errorStatus: error ? (error as any).status : null,
+        errorName: error ? (error as any).name : null,
+        data: data ? {
+          user: data.user ? { id: data.user.id, email: data.user.email } : null,
+          session: data.session ? 'exists' : 'none'
+        } : null,
+        timestamp: new Date().toISOString()
       });
 
       if (error) {
@@ -92,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     } catch (error) {
+      console.error('[AuthContext] signIn unexpected error:', error);
       return { error: 'Terjadi kesalahan saat login' };
     }
   };
