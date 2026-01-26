@@ -6,6 +6,7 @@ export interface Jimpitan {
   month: number | null;
   year: number | null;
   notes: string | null;
+  photo_url: string | null;
   created_at: string;
 }
 
@@ -28,12 +29,14 @@ export interface CreateJimpitanInput {
   amount: number;
   collection_date: string;
   notes?: string;
+  photo?: File | null;
 }
 
 export interface UpdateJimpitanInput {
   amount?: number;
   collection_date?: string;
   notes?: string;
+  photo_url?: string | null;
 }
 
 export interface CreateBackupInput {
@@ -46,4 +49,13 @@ export interface UpdateBackupInput {
 
 export interface UpdatePengaturanInput {
   value: string;
+}
+
+export type UserRole = 'admin' | 'user';
+
+export interface UserRole {
+  id: string;
+  user_id: string;
+  role: UserRole;
+  created_at: string;
 }

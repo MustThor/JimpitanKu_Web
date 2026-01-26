@@ -6,6 +6,9 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PhotoUpload } from '@/components/ui/PhotoUpload';
+import { PhotoThumbnail } from '@/components/ui/PhotoThumbnail';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useJimpitan } from '@/hooks/useJimpitan';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -24,6 +27,7 @@ export default function InputPage() {
     amount: '',
     collection_date: new Date().toISOString().split('T')[0],
     notes: '',
+    photo: null as File | null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -47,6 +51,7 @@ export default function InputPage() {
       amount: parseInt(formData.amount, 10),
       collection_date: formData.collection_date,
       notes: formData.notes,
+      photo: formData.photo,
     });
 
     setIsSubmitting(false);
@@ -57,6 +62,7 @@ export default function InputPage() {
         amount: '',
         collection_date: new Date().toISOString().split('T')[0],
         notes: '',
+        photo: null,
       });
       setTimeout(() => setSuccessMessage(''), 3000);
     } else {
@@ -67,7 +73,8 @@ export default function InputPage() {
   const recentEntries = data.slice(0, 5);
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+    <ProtectedRoute>
+      <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <Sidebar
         menuItems={MENU_ITEMS}
         currentPage="input"
@@ -148,6 +155,13 @@ export default function InputPage() {
                     />
                   </div>
 
+                  <PhotoUpload
+                    value={formData.photo}
+                    onChange={(file) => setFormData({ ...formData, photo: file })}
+                    error={errors.photo}
+                    darkMode={darkMode}
+                  />
+
                   <Button
                     type="submit"
                     disabled={isSubmitting}
@@ -167,20 +181,18 @@ export default function InputPage() {
                     recentEntries.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center justify-between p-4 rounded-xl
+                        className={`flex items-center gap-4 p-4 rounded-xl
                           ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}
                       >
-                        <div>
+                        <PhotoThumbnail url={item.photo_url} darkMode={darkMode} size="md" />
+                        <div className="flex-1">
                           <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                             {formatRupiah(item.amount)}
                           </p>
                           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {formatShortDate(item.collection_date)}
+                            {formatShortDate(item.collection_date)} • {item.notes || '-'}
                           </p>
                         </div>
-                        <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {item.notes || '-'}
-                        </span>
                       </div>
                     ))
                   ) : (
@@ -195,5 +207,6 @@ export default function InputPage() {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

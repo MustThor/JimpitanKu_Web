@@ -7,6 +7,8 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { PhotoThumbnail } from '@/components/ui/PhotoThumbnail';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useJimpitan } from '@/hooks/useJimpitan';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -78,7 +80,8 @@ export default function RiwayatPage() {
   ];
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+    <ProtectedRoute>
+      <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <Sidebar
         menuItems={MENU_ITEMS}
         currentPage="riwayat"
@@ -162,6 +165,9 @@ export default function RiwayatPage() {
                         <th className={`text-left py-4 px-4 font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Catatan
                         </th>
+                        <th className={`text-left py-4 px-4 font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Foto
+                        </th>
                         <th className={`text-center py-4 px-4 font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Aksi
                         </th>
@@ -183,6 +189,9 @@ export default function RiwayatPage() {
                             <td className={`py-4 px-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                               {item.notes || '-'}
                             </td>
+                            <td className="py-4 px-4">
+                              <PhotoThumbnail url={item.photo_url} darkMode={darkMode} size="sm" />
+                            </td>
                             <td className="py-4 px-4 text-center">
                               <button
                                 onClick={() => handleDelete(item.id)}
@@ -196,7 +205,7 @@ export default function RiwayatPage() {
                       ) : (
                         <tr>
                           <td
-                            colSpan={4}
+                            colSpan={5}
                             className={`py-8 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
                           >
                             Tidak ada data untuk periode ini
@@ -244,5 +253,6 @@ export default function RiwayatPage() {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

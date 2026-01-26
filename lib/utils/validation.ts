@@ -2,6 +2,7 @@ export const validateJimpitanInput = (data: {
   amount: string | number;
   collection_date: string;
   notes?: string;
+  photo?: File | null;
 }): { valid: boolean; errors: Record<string, string> } => {
   const errors: Record<string, string> = {};
 
@@ -20,6 +21,19 @@ export const validateJimpitanInput = (data: {
       errors.collection_date = 'Format tanggal tidak valid';
     } else if (date > new Date()) {
       errors.collection_date = 'Tanggal tidak boleh di masa depan';
+    }
+  }
+
+  // Optional photo validation
+  if (data.photo) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(data.photo.type)) {
+      errors.photo = 'Format file tidak didukung. Gunakan JPG, PNG, atau WebP.';
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (data.photo.size > maxSize) {
+      errors.photo = 'Ukuran file terlalu besar. Maksimal 5MB.';
     }
   }
 

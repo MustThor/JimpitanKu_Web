@@ -7,6 +7,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { MENU_ITEMS } from '@/lib/constants';
@@ -69,7 +70,8 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+    <ProtectedRoute>
+      <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <Sidebar
         menuItems={MENU_ITEMS}
         currentPage="settings"
@@ -154,7 +156,7 @@ export default function SettingsPage() {
                 </div>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   Aplikasi ini dibuat untuk membantu pencatatan iuran jimpitan komunitas {appName}.
-                  Data disimpan secara lokal dan dapat di-backup kapan saja.
+                  Data disimpan secara online dan dapat di-backup kapan saja.
                 </p>
               </div>
             </div>
@@ -162,5 +164,6 @@ export default function SettingsPage() {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

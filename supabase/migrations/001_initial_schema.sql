@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS pengaturan (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_jimpitan_date ON jimpitan(collection_date DESC);
-CREATE INDEX idx_jimpitan_month_year ON jimpitan(month, year);
-CREATE INDEX idx_backup_created_at ON backup_history(created_at DESC);
-CREATE INDEX idx_pengaturan_key ON pengaturan(key);
+CREATE INDEX IF NOT EXISTS idx_jimpitan_date ON jimpitan(collection_date DESC);
+CREATE INDEX IF NOT EXISTS idx_jimpitan_month_year ON jimpitan(month, year);
+CREATE INDEX IF NOT EXISTS idx_backup_created_at ON backup_history(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pengaturan_key ON pengaturan(key);

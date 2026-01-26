@@ -10,6 +10,9 @@ import { WeeklyChart } from '@/components/dashboard/WeeklyChart';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PhotoUpload } from '@/components/ui/PhotoUpload';
+import { PhotoThumbnail } from '@/components/ui/PhotoThumbnail';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useJimpitan } from '@/hooks/useJimpitan';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -33,6 +36,7 @@ export default function DashboardPage() {
     amount: '',
     collection_date: new Date().toISOString().split('T')[0],
     notes: '',
+    photo: null as File | null,
   });
 
   const currentPage = 'dashboard';
@@ -66,6 +70,7 @@ export default function DashboardPage() {
       amount: parseInt(formData.amount, 10),
       collection_date: formData.collection_date,
       notes: formData.notes,
+      photo: formData.photo,
     });
 
     setIsSubmitting(false);
@@ -76,6 +81,7 @@ export default function DashboardPage() {
         amount: '',
         collection_date: new Date().toISOString().split('T')[0],
         notes: '',
+        photo: null,
       });
       setTimeout(() => {
         setSuccessMessage('');
@@ -103,7 +109,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+    <ProtectedRoute>
+      <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <Sidebar
         menuItems={MENU_ITEMS}
         currentPage={currentPage}
@@ -194,10 +201,11 @@ export default function DashboardPage() {
                     recentEntries.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center justify-between p-4 rounded-xl
+                        className={`flex items-center gap-4 p-4 rounded-xl
                           ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}
                       >
-                        <div>
+                        <PhotoThumbnail url={item.photo_url} darkMode={darkMode} size="md" />
+                        <div className="flex-1">
                           <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                             {formatRupiah(item.amount)}
                           </p>
@@ -283,6 +291,13 @@ export default function DashboardPage() {
               />
             </div>
 
+            <PhotoUpload
+              value={formData.photo}
+              onChange={(file) => setFormData({ ...formData, photo: file })}
+              error={errors.photo}
+              darkMode={darkMode}
+            />
+
             <div className="flex gap-3">
               <Button
                 type="button"
@@ -304,5 +319,6 @@ export default function DashboardPage() {
         </Modal>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

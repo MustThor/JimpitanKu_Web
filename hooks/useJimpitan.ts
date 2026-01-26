@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { Jimpitan, CreateJimpitanInput } from '@/lib/supabase/types';
 import { getWeekNumber, getMonthAndYear } from '@/lib/utils/format';
+import { uploadJimpitanPhoto, deleteJimpitanPhoto } from '@/lib/supabase/storage';
 
 export function useJimpitan() {
   const [data, setData] = useState<Jimpitan[]>([]);
@@ -31,6 +32,25 @@ export function useJimpitan() {
   const addJimpitan = async (input: CreateJimpitanInput) => {
     try {
       const date = new Date(input.collection_date);
+      let photoUrl: string | null = null;
+
+      // Upload photo if provided
+      if (input.photo) {
+        // Generate temporary ID for photo upload
+        const tempId = crypto.randomUUID();
+        const uploadResult = await uploadJimpitanPhoto(input.photo, tempId);
+
+        if (!uploadResult.success) {
+          return {
+            success: false,
+            error: uploadResult.error || 'Gagal mengupload foto'
+          };
+        }
+
+        photoUrl = uploadResult.url || null;
+      }
+
+      // Insert jimpitan record
       const { data: newJimpitan, error: insertError } = await supabase
         .from('jimpitan')
         .insert({
@@ -40,11 +60,19 @@ export function useJimpitan() {
           month: getMonthAndYear(date).month,
           year: getMonthAndYear(date).year,
           notes: input.notes || null,
+          photo_url: photoUrl,
         })
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        // Delete uploaded photo if database insert fails
+        if (photoUrl) {
+          await deleteJimpitanPhoto(photoUrl);
+        }
+        throw insertError;
+      }
+
       setData([newJimpitan, ...data]);
       return { success: true, data: newJimpitan };
     } catch (err) {
@@ -56,12 +84,21 @@ export function useJimpitan() {
 
   const deleteJimpitan = async (id: string) => {
     try {
+      // Get photo URL before deletion
+      const itemToDelete = data.find(item => item.id === id);
+
       const { error: deleteError } = await supabase
         .from('jimpitan')
         .delete()
         .eq('id', id);
 
       if (deleteError) throw deleteError;
+
+      // Delete photo from storage if exists
+      if (itemToDelete?.photo_url) {
+        await deleteJimpitanPhoto(itemToDelete.photo_url);
+      }
+
       setData(data.filter(item => item.id !== id));
       return { success: true };
     } catch (err) {

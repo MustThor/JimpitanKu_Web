@@ -6,9 +6,11 @@ import { Download, Upload, Trash2, RefreshCw } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useBackup } from '@/hooks/useBackup';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { MENU_ITEMS } from '@/lib/constants';
 import { formatDateTime } from '@/lib/utils/format';
 
@@ -16,6 +18,7 @@ export default function BackupPage() {
   const { darkMode, toggleTheme } = useTheme();
   const { data, loading, createBackup, restoreBackup, deleteBackup, error } = useBackup();
   const { appName } = useAppSettings();
+  const { isAdmin } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -55,7 +58,8 @@ export default function BackupPage() {
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+    <ProtectedRoute>
+      <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
       <Sidebar
         menuItems={MENU_ITEMS}
         currentPage="backup"
@@ -151,13 +155,15 @@ export default function BackupPage() {
                           >
                             <Upload className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDelete(backup.id, backup.backup_name)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          {isAdmin() && (
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(backup.id, backup.backup_name)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -175,5 +181,6 @@ export default function BackupPage() {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
