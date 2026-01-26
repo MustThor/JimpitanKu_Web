@@ -53,7 +53,7 @@ export interface UpdatePengaturanInput {
 
 export type UserRole = 'admin' | 'user';
 
-export interface UserRole {
+export interface UserRoleAssignment {
   id: string;
   user_id: string;
   role: UserRole;
