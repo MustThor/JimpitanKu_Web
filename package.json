@@ -7,7 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "NODE_ENV=test next test",
+    "test:watch": "NODE_ENV=test next test --watch",
+    "build:prod": "NODE_ENV=production next build",
+    "build:staging": "NODE_ENV=staging next build",
+    "db:migrate:dev": "supabase db push --db-url $DEV_DB_URL",
+    "db:migrate:staging": "supabase db push --db-url $STAGING_DB_URL",
+    "db:migrate:prod": "supabase db push --db-url $PROD_DB_URL",
+    "db:backup:prod": "supabase db dump --db-url $PROD_DB_URL -f backup-$(date +%Y%m%d-%H%M%S).sql",
+    "env:check": "node -e \"console.log('NODE_ENV:', process.env.NODE_ENV); console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...');\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
