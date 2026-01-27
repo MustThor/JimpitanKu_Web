@@ -276,19 +276,26 @@ export default function DashboardPage() {
 
             <div>
               <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Catatan
+                Hari Pengumpulan
               </label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Contoh: Rumah Pak Teguh"
-                rows={3}
-                className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 resize-none
-                  ${darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500'
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-              />
+              <div className="grid grid-cols-4 gap-2">
+                {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, notes: day })}
+                    className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border-2
+                      ${formData.notes === day
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-transparent shadow-lg scale-105'
+                        : darkMode
+                          ? 'bg-gray-700 text-gray-300 border-gray-600 hover:border-blue-500 hover:bg-gray-600'
+                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+                      }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <PhotoUpload
