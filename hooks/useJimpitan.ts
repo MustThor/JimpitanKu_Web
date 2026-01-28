@@ -128,13 +128,21 @@ export function useJimpitan() {
   };
 
   const getFilteredData = (month: number, year: number) => {
-    return data.filter(item => item.month === month && item.year === year);
+    // Filter by actual collection_date instead of stored month/year
+    return data.filter(item => {
+      const date = new Date(item.collection_date);
+      return (date.getMonth() + 1) === month && date.getFullYear() === year;
+    });
   };
 
   const getTotalByPeriod = (month?: number, year?: number) => {
     let filtered = data;
     if (month !== undefined && year !== undefined) {
-      filtered = data.filter(item => item.month === month && item.year === year);
+      // Filter by actual collection_date instead of stored month/year
+      filtered = data.filter(item => {
+        const date = new Date(item.collection_date);
+        return (date.getMonth() + 1) === month && date.getFullYear() === year;
+      });
     }
     return filtered.reduce((sum, item) => sum + item.amount, 0);
   };
@@ -148,9 +156,21 @@ export function useJimpitan() {
 
   const getTotalThisWeek = () => {
     const now = new Date();
-    const weekInfo = getWeekInfo(now);
+    // Find the Sunday of the current week
+    const dayOfWeek = now.getDay(); // 0 = Sunday
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - dayOfWeek);
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    
     return data
-      .filter(item => item.week_number === weekInfo.weekNumber && item.month === weekInfo.month && item.year === weekInfo.year)
+      .filter(item => item.collection_date >= weekStartStr && item.collection_date <= weekEndStr)
       .reduce((sum, item) => sum + item.amount, 0);
   };
 
