@@ -37,7 +37,10 @@ export const validateJimpitanInput = (data: {
     }
   }
 
-  // Notes is optional, no validation needed
+  // Validate notes (hari pengumpulan) - wajib dipilih
+  if (!data.notes || data.notes.trim().length === 0) {
+    errors.notes = 'Hari pengumpulan wajib dipilih';
+  }
 
   return {
     valid: Object.keys(errors).length === 0,

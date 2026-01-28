@@ -276,7 +276,7 @@ export default function DashboardPage() {
 
             <div>
               <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Hari Pengumpulan
+                Hari Pengumpulan <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-4 gap-2">
                 {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => (
@@ -296,6 +296,9 @@ export default function DashboardPage() {
                   </button>
                 ))}
               </div>
+              {errors.notes && (
+                <p className="mt-2 text-sm text-red-500">{errors.notes}</p>
+              )}
             </div>
 
             <PhotoUpload
