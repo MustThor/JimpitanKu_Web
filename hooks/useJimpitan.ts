@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { Jimpitan, CreateJimpitanInput } from '@/lib/supabase/types';
-import { getWeekNumber, getMonthAndYear } from '@/lib/utils/format';
+import { getWeekInfo, getCalendarWeeksForMonth } from '@/lib/utils/format';
 import { uploadJimpitanPhoto, deleteJimpitanPhoto } from '@/lib/supabase/storage';
 
 export function useJimpitan() {
@@ -50,13 +50,14 @@ export function useJimpitan() {
         photoUrl = uploadResult.url || null;
       }
 
-      // Insert jimpitan record
+      // Insert jimpitan record - week belongs to month where Sunday falls
+      const weekInfo = getWeekInfo(date);
       const insertData = {
         amount: input.amount,
         collection_date: input.collection_date,
-        week_number: getWeekNumber(date),
-        month: getMonthAndYear(date).month,
-        year: getMonthAndYear(date).year,
+        week_number: weekInfo.weekNumber,
+        month: weekInfo.month,
+        year: weekInfo.year,
         notes: input.notes || null,
         photo_url: photoUrl,
       };
@@ -66,8 +67,7 @@ export function useJimpitan() {
         input,
         photoUrl,
         date: date.toISOString(),
-        weekNumber: getWeekNumber(date),
-        monthYear: getMonthAndYear(date)
+        weekInfo: weekInfo
       });
 
       const { data: newJimpitan, error: insertError } = await supabase
@@ -148,22 +148,20 @@ export function useJimpitan() {
 
   const getTotalThisWeek = () => {
     const now = new Date();
-    const currentWeek = getWeekNumber(now);
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    const weekInfo = getWeekInfo(now);
     return data
-      .filter(item => item.week_number === currentWeek && item.month === currentMonth && item.year === currentYear)
+      .filter(item => item.week_number === weekInfo.weekNumber && item.month === weekInfo.month && item.year === weekInfo.year)
       .reduce((sum, item) => sum + item.amount, 0);
   };
 
   const getWeeklyData = (month: number, year: number) => {
-    const weeks = [1, 2, 3, 4].map(week => ({
-      week: `Minggu ${week}`,
+    const calendarWeeks = getCalendarWeeksForMonth(month, year);
+    return calendarWeeks.map(week => ({
+      week: week.label,
       amount: data
-        .filter(d => d.week_number === week && d.month === month && d.year === year)
+        .filter(d => d.week_number === week.weekNumber && d.month === week.belongsToMonth && d.year === week.belongsToYear)
         .reduce((sum, item) => sum + item.amount, 0),
     }));
-    return weeks;
   };
 
   useEffect(() => {

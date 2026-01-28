@@ -44,14 +44,31 @@ export default function DashboardPage() {
   const currentPage = 'dashboard';
 
   const now = new Date();
-  const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+
+  const months = [
+    { value: 1, label: 'Januari' },
+    { value: 2, label: 'Februari' },
+    { value: 3, label: 'Maret' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'Mei' },
+    { value: 6, label: 'Juni' },
+    { value: 7, label: 'Juli' },
+    { value: 8, label: 'Agustus' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'Oktober' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'Desember' },
+  ];
+
+  const years = [2026, 2027, 2028, 2029, 2030];
 
   const totalAll = getTotalByPeriod();
-  const totalThisMonth = getTotalByPeriod(currentMonth, currentYear);
+  const totalThisMonth = getTotalByPeriod(selectedMonth, selectedYear);
   const totalThisWeek = getTotalThisWeek();
 
-  const weeklyChartData = getWeeklyData(currentMonth, currentYear);
+  const weeklyChartData = getWeeklyData(selectedMonth, selectedYear);
 
   const recentEntries = data.slice(0, 5);
 
@@ -99,7 +116,7 @@ export default function DashboardPage() {
       alert('Tidak ada data untuk diekspor');
       return;
     }
-    exportWeeklySummaryToPDF(weeklyChartData, currentMonth, currentYear, appName);
+    exportWeeklySummaryToPDF(weeklyChartData, selectedMonth, selectedYear, appName);
   };
 
   const handleExportWeeklyExcel = () => {
@@ -107,7 +124,7 @@ export default function DashboardPage() {
       alert('Tidak ada data untuk diekspor');
       return;
     }
-    exportWeeklySummaryToExcel(weeklyChartData, currentMonth, currentYear);
+    exportWeeklySummaryToExcel(weeklyChartData, selectedMonth, selectedYear);
   };
 
   return (
@@ -165,10 +182,42 @@ export default function DashboardPage() {
               </div>
 
               <div className={`p-6 rounded-2xl shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Grafik Pemasukan Mingguan - {MENU_ITEMS[0].label}
+                    Grafik Pemasukan Mingguan
                   </h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors
+                        ${darkMode
+                          ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500'
+                          : 'bg-white text-gray-700 border-gray-300 focus:border-blue-500'
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                    >
+                      {months.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors
+                        ${darkMode
+                          ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500'
+                          : 'bg-white text-gray-700 border-gray-300 focus:border-blue-500'
+                        } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                    >
+                      {years.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       onClick={handleExportWeeklyPDF}
