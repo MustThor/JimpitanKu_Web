@@ -156,12 +156,23 @@ export function useJimpitan() {
 
   const getWeeklyData = (month: number, year: number) => {
     const calendarWeeks = getCalendarWeeksForMonth(month, year);
-    return calendarWeeks.map(week => ({
-      week: week.label,
-      amount: data
-        .filter(d => d.week_number === week.weekNumber && d.month === week.belongsToMonth && d.year === week.belongsToYear)
-        .reduce((sum, item) => sum + item.amount, 0),
-    }));
+    
+    return calendarWeeks.map(week => {
+      // Use date range filtering instead of stored week_number/month/year
+      // This handles cases where old data has incorrect stored values
+      const weekStart = week.startDate.toISOString().split('T')[0];
+      const weekEnd = week.endDate.toISOString().split('T')[0];
+      
+      const matchingData = data.filter(d => {
+        const collectionDate = d.collection_date;
+        return collectionDate >= weekStart && collectionDate <= weekEnd;
+      });
+      
+      return {
+        week: week.label,
+        amount: matchingData.reduce((sum, item) => sum + item.amount, 0),
+      };
+    });
   };
 
   useEffect(() => {
