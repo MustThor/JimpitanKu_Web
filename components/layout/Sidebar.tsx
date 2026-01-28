@@ -1,14 +1,15 @@
 'use client';
 
 import { MenuItem } from '@/lib/constants';
-import { Home, PlusCircle, History, Database, Settings } from 'lucide-react';
+import { Home, PlusCircle, History, Database, Settings, Info } from 'lucide-react';
 
-const icons = {
-  Home,
-  PlusCircle,
-  History,
-  Database,
-  Settings,
+const icons: Record<string, typeof Home> = {
+  dashboard: Home,
+  input: PlusCircle,
+  riwayat: History,
+  backup: Database,
+  about: Info,
+  settings: Settings,
 };
 
 interface SidebarProps {
@@ -19,9 +20,13 @@ interface SidebarProps {
   appName: string;
   isOpen: boolean;
   onClose: () => void;
+  isAdmin?: boolean;
 }
 
-export function Sidebar({ menuItems, currentPage, onPageChange, darkMode, appName, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ menuItems, currentPage, onPageChange, darkMode, appName, isOpen, onClose, isAdmin = false }: SidebarProps) {
+  // Filter menu items based on admin status
+  const filteredMenuItems = menuItems.filter(item => !item.adminOnly || isAdmin);
+
   return (
     <>
       {/* Backdrop overlay */}
@@ -50,8 +55,8 @@ export function Sidebar({ menuItems, currentPage, onPageChange, darkMode, appNam
           </div>
 
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {menuItems.map((item) => {
-              const Icon = icons[item.id as keyof typeof icons];
+            {filteredMenuItems.map((item) => {
+              const Icon = icons[item.id];
               return (
                 <button
                   key={item.id}
@@ -76,3 +81,4 @@ export function Sidebar({ menuItems, currentPage, onPageChange, darkMode, appNam
     </>
   );
 }
+

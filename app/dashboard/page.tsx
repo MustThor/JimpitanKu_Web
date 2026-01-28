@@ -16,6 +16,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useJimpitan } from '@/hooks/useJimpitan';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { MENU_ITEMS } from '@/lib/constants';
 import { formatRupiah, formatShortDate } from '@/lib/utils/format';
 import { validateJimpitanInput } from '@/lib/utils/validation';
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const { darkMode, toggleTheme } = useTheme();
   const { data, loading, getTotalByPeriod, getTotalThisWeek, getWeeklyData, addJimpitan } = useJimpitan();
   const { appName } = useAppSettings();
+  const { isAdmin } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,6 +121,7 @@ export default function DashboardPage() {
         appName={appName}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isAdmin={isAdmin()}
       />
 
       <div className="lg:ml-64">

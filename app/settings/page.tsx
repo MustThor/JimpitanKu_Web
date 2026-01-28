@@ -10,12 +10,14 @@ import { Select } from '@/components/ui/Select';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { MENU_ITEMS } from '@/lib/constants';
 import { validateSettingsInput } from '@/lib/utils/validation';
 
 export default function SettingsPage() {
   const { darkMode, toggleTheme } = useTheme();
   const { appName, nominalDefault, theme, isLoaded, saveSettings, setAppName: setAppNameState, setNominalDefault: setNominalDefaultState, setTheme: setThemeState } = useAppSettings();
+  const { isAdmin } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -80,6 +82,7 @@ export default function SettingsPage() {
         appName={appName}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isAdmin={isAdmin()}
       />
 
       <div className="lg:ml-64">

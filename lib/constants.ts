@@ -2,6 +2,7 @@ export type MenuItem = {
   id: string;
   label: string;
   href: string;
+  adminOnly?: boolean;
 };
 
 export const MENU_ITEMS: MenuItem[] = [
@@ -9,7 +10,8 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'input', label: 'Input Jimpitan', href: '/input' },
   { id: 'riwayat', label: 'Riwayat', href: '/riwayat' },
   { id: 'backup', label: 'Backup', href: '/backup' },
-  { id: 'settings', label: 'Settings', href: '/settings' },
+  { id: 'about', label: 'Tentang Aplikasi', href: '/about' },
+  { id: 'settings', label: 'Settings', href: '/settings', adminOnly: true },
 ];
 
 export const MONTHS = [

@@ -68,6 +68,7 @@ export default function BackupPage() {
         appName={appName}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isAdmin={isAdmin()}
       />
 
       <div className="lg:ml-64">

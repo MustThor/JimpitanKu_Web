@@ -12,6 +12,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useJimpitan } from '@/hooks/useJimpitan';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { MENU_ITEMS, MONTHS, ITEMS_PER_PAGE } from '@/lib/constants';
 import { formatRupiah, formatShortDate } from '@/lib/utils/format';
 import { exportToPDF, exportToExcel } from '@/lib/utils/export';
@@ -20,6 +21,7 @@ export default function RiwayatPage() {
   const { darkMode, toggleTheme } = useTheme();
   const { data, loading, deleteJimpitan } = useJimpitan();
   const { appName } = useAppSettings();
+  const { isAdmin } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -90,6 +92,7 @@ export default function RiwayatPage() {
         appName={appName}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isAdmin={isAdmin()}
       />
 
       <div className="lg:ml-64">
