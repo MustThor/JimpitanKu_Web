@@ -146,6 +146,16 @@ export function useJimpitan() {
       .reduce((sum, item) => sum + item.amount, 0);
   };
 
+  const getTotalThisWeek = () => {
+    const now = new Date();
+    const currentWeek = getWeekNumber(now);
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    return data
+      .filter(item => item.week_number === currentWeek && item.month === currentMonth && item.year === currentYear)
+      .reduce((sum, item) => sum + item.amount, 0);
+  };
+
   const getWeeklyData = (month: number, year: number) => {
     const weeks = [1, 2, 3, 4].map(week => ({
       week: `Minggu ${week}`,
@@ -170,6 +180,7 @@ export function useJimpitan() {
     getFilteredData,
     getTotalByPeriod,
     getTotalToday,
+    getTotalThisWeek,
     getWeeklyData,
   };
 }

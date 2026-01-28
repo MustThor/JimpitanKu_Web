@@ -23,7 +23,7 @@ import { exportWeeklySummaryToPDF, exportWeeklySummaryToExcel } from '@/lib/util
 
 export default function DashboardPage() {
   const { darkMode, toggleTheme } = useTheme();
-  const { data, loading, getTotalByPeriod, getTotalToday, getWeeklyData, addJimpitan } = useJimpitan();
+  const { data, loading, getTotalByPeriod, getTotalThisWeek, getWeeklyData, addJimpitan } = useJimpitan();
   const { appName } = useAppSettings();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
   const totalAll = getTotalByPeriod();
   const totalThisMonth = getTotalByPeriod(currentMonth, currentYear);
-  const totalToday = getTotalToday();
+  const totalThisWeek = getTotalThisWeek();
 
   const weeklyChartData = getWeeklyData(currentMonth, currentYear);
 
@@ -153,8 +153,8 @@ export default function DashboardPage() {
                   darkMode={darkMode}
                 />
                 <StatCard
-                  title="Pemasukan Hari Ini"
-                  value={totalToday}
+                  title="Pemasukan Minggu Ini"
+                  value={totalThisWeek}
                   icon={TrendingUp}
                   color="bg-gradient-to-br from-purple-500 to-purple-600"
                   darkMode={darkMode}
