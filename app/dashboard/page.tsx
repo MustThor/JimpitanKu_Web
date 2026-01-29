@@ -20,7 +20,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { MENU_ITEMS } from '@/lib/constants';
 import { formatRupiah, formatShortDate } from '@/lib/utils/format';
 import { validateJimpitanInput } from '@/lib/utils/validation';
-import { exportWeeklySummaryToPDF, exportWeeklySummaryToExcel } from '@/lib/utils/export';
+import { exportToPDF, exportToExcel } from '@/lib/utils/export'; 
 
 export default function DashboardPage() {
   const { darkMode, toggleTheme } = useTheme();
@@ -111,20 +111,25 @@ export default function DashboardPage() {
     }
   };
 
-  const handleExportWeeklyPDF = () => {
-    if (weeklyChartData.length === 0) {
+  // Get daily data for selected month/year for export
+  const dailyDataForExport = data.filter(
+    (item) => item.month === selectedMonth && item.year === selectedYear
+  );
+
+  const handleExportDailyPDF = () => {
+    if (dailyDataForExport.length === 0) {
       alert('Tidak ada data untuk diekspor');
       return;
     }
-    exportWeeklySummaryToPDF(weeklyChartData, selectedMonth, selectedYear, appName);
+    exportToPDF(dailyDataForExport, selectedMonth, selectedYear, appName);
   };
 
-  const handleExportWeeklyExcel = () => {
-    if (weeklyChartData.length === 0) {
+  const handleExportDailyExcel = () => {
+    if (dailyDataForExport.length === 0) {
       alert('Tidak ada data untuk diekspor');
       return;
     }
-    exportWeeklySummaryToExcel(weeklyChartData, selectedMonth, selectedYear);
+    exportToExcel(dailyDataForExport, selectedMonth, selectedYear);
   };
 
   return (
@@ -220,8 +225,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      onClick={handleExportWeeklyPDF}
-                      disabled={weeklyChartData.length === 0}
+                      onClick={handleExportDailyPDF}
+                      disabled={dailyDataForExport.length === 0}
                       variant="ghost"
                       size="sm"
                       className="flex items-center gap-2"
@@ -230,8 +235,8 @@ export default function DashboardPage() {
                       PDF
                     </Button>
                     <Button
-                      onClick={handleExportWeeklyExcel}
-                      disabled={weeklyChartData.length === 0}
+                      onClick={handleExportDailyExcel}
+                      disabled={dailyDataForExport.length === 0}
                       variant="ghost"
                       size="sm"
                       className="flex items-center gap-2"

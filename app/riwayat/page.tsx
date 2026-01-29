@@ -15,11 +15,11 @@ import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { MENU_ITEMS, MONTHS, ITEMS_PER_PAGE } from '@/lib/constants';
 import { formatRupiah, formatShortDate } from '@/lib/utils/format';
-import { exportToPDF, exportToExcel } from '@/lib/utils/export';
+import { exportWeeklySummaryToPDF, exportWeeklySummaryToExcel } from '@/lib/utils/export';
 
 export default function RiwayatPage() {
   const { darkMode, toggleTheme } = useTheme();
-  const { data, loading, deleteJimpitan } = useJimpitan();
+  const { data, loading, deleteJimpitan, getWeeklyData } = useJimpitan();
   const { appName } = useAppSettings();
   const { isAdmin } = useAuth();
   const router = useRouter();
@@ -55,20 +55,23 @@ export default function RiwayatPage() {
     }
   };
 
+  // Get weekly data for export
+  const weeklyDataForExport = getWeeklyData(filterMonth, filterYear);
+
   const handleExportPDF = () => {
-    if (filteredData.length === 0) {
+    if (weeklyDataForExport.length === 0) {
       alert('Tidak ada data untuk diekspor');
       return;
     }
-    exportToPDF(filteredData, filterMonth, filterYear, appName);
+    exportWeeklySummaryToPDF(weeklyDataForExport, filterMonth, filterYear, appName);
   };
 
   const handleExportExcel = () => {
-    if (filteredData.length === 0) {
+    if (weeklyDataForExport.length === 0) {
       alert('Tidak ada data untuk diekspor');
       return;
     }
-    exportToExcel(filteredData, filterMonth, filterYear);
+    exportWeeklySummaryToExcel(weeklyDataForExport, filterMonth, filterYear);
   };
 
   const monthOptions = MONTHS.map((month, index) => ({
@@ -138,7 +141,7 @@ export default function RiwayatPage() {
                   <div className="flex gap-2 items-end">
                     <Button
                       onClick={handleExportPDF}
-                      disabled={filteredData.length === 0}
+                      disabled={weeklyDataForExport.length === 0}
                       className="flex items-center gap-2"
                     >
                       <FileText className="w-4 h-4" />
@@ -146,7 +149,7 @@ export default function RiwayatPage() {
                     </Button>
                     <Button
                       onClick={handleExportExcel}
-                      disabled={filteredData.length === 0}
+                      disabled={weeklyDataForExport.length === 0}
                       className="flex items-center gap-2"
                     >
                       <Table className="w-4 h-4" />
