@@ -212,36 +212,46 @@ export default function DashboardPage() {
                     Grafik Pemasukan Mingguan
                   </h3>
                   <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors
-                        ${darkMode
-                          ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500'
-                          : 'bg-white text-gray-700 border-gray-300 focus:border-blue-500'
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-                    >
-                      {months.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors
-                        ${darkMode
-                          ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500'
-                          : 'bg-white text-gray-700 border-gray-300 focus:border-blue-500'
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-                    >
-                      {years.map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
+                    {isAdmin() ? (
+                      <>
+                        <select
+                          value={selectedMonth}
+                          onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors
+                            ${darkMode
+                              ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500'
+                              : 'bg-white text-gray-700 border-gray-300 focus:border-blue-500'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                        >
+                          {months.map((m) => (
+                            <option key={m.value} value={m.value}>
+                              {m.label}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={selectedYear}
+                          onChange={(e) => setSelectedYear(Number(e.target.value))}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors
+                            ${darkMode
+                              ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500'
+                              : 'bg-white text-gray-700 border-gray-300 focus:border-blue-500'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                        >
+                          {years.map((y) => (
+                            <option key={y} value={y}>
+                              {y}
+                            </option>
+                          ))}
+                        </select>
+                      </>
+                    ) : (
+                      <span className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                        darkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                        {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+                      </span>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
