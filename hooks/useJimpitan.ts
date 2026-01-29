@@ -6,19 +6,27 @@ import { Jimpitan, CreateJimpitanInput } from '@/lib/supabase/types';
 import { getWeekInfo, getCalendarWeeksForMonth } from '@/lib/utils/format';
 import { uploadJimpitanPhoto, deleteJimpitanPhoto } from '@/lib/supabase/storage';
 
-export function useJimpitan() {
+export function useJimpitan(isAdmin: boolean = false) {
   const [data, setData] = useState<Jimpitan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchJimpitan = async () => {
+  const fetchJimpitan = async (includeArchived: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
-      const { data: jimpitanData, error: fetchError } = await supabase
+      
+      let query = supabase
         .from('jimpitan')
         .select('*')
         .order('collection_date', { ascending: false });
+      
+      // Filter out archived records if not including them
+      if (!includeArchived) {
+        query = query.eq('is_archived', false);
+      }
+
+      const { data: jimpitanData, error: fetchError } = await query;
 
       if (fetchError) throw fetchError;
       setData(jimpitanData || []);
@@ -164,14 +172,20 @@ export function useJimpitan() {
 
   const getTotalThisWeek = () => {
     const now = new Date();
-    // Find the Sunday of the current week
-    const dayOfWeek = now.getDay(); // 0 = Sunday
+    // Find the Monday of the current week (Monday-Sunday system)
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
     const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - dayOfWeek);
+    if (dayOfWeek === 0) {
+      // Sunday - go back 6 days to Monday
+      weekStart.setDate(now.getDate() - 6);
+    } else {
+      // Go back to Monday (dayOfWeek - 1 days)
+      weekStart.setDate(now.getDate() - (dayOfWeek - 1));
+    }
     weekStart.setHours(0, 0, 0, 0);
     
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setDate(weekStart.getDate() + 6); // Sunday
     weekEnd.setHours(23, 59, 59, 999);
     
     // Use local date format instead of toISOString() to avoid UTC conversion
@@ -205,9 +219,50 @@ export function useJimpitan() {
     });
   };
 
+  const getDailyTotalByDayOfWeek = (month: number, year: number) => {
+    // Day names: Senin (1) to Minggu (0)
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    
+    // Initialize totals for each day
+    const dailyTotals: { [key: string]: number } = {
+      'Senin': 0,
+      'Selasa': 0,
+      'Rabu': 0,
+      'Kamis': 0,
+      'Jumat': 0,
+      'Sabtu': 0,
+      'Minggu': 0,
+    };
+
+    // Filter data by month and year (based on collection_date)
+    const filteredData = data.filter(item => {
+      const date = new Date(item.collection_date);
+      return (date.getMonth() + 1) === month && date.getFullYear() === year;
+    });
+
+    // Sum amounts for each day of the week
+    filteredData.forEach(item => {
+      const date = new Date(item.collection_date);
+      const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const dayName = dayNames[dayOfWeek];
+      dailyTotals[dayName] += item.amount;
+    });
+
+    // Return array ordered from Senin to Minggu
+    return [
+      { day: 'Senin', amount: dailyTotals['Senin'] },
+      { day: 'Selasa', amount: dailyTotals['Selasa'] },
+      { day: 'Rabu', amount: dailyTotals['Rabu'] },
+      { day: 'Kamis', amount: dailyTotals['Kamis'] },
+      { day: 'Jumat', amount: dailyTotals['Jumat'] },
+      { day: 'Sabtu', amount: dailyTotals['Sabtu'] },
+      { day: 'Minggu', amount: dailyTotals['Minggu'] },
+    ];
+  };
+
   useEffect(() => {
-    fetchJimpitan();
-  }, []);
+    fetchJimpitan(isAdmin);
+  }, [isAdmin]);
 
   return {
     data,
@@ -221,5 +276,6 @@ export function useJimpitan() {
     getTotalToday,
     getTotalThisWeek,
     getWeeklyData,
+    getDailyTotalByDayOfWeek,
   };
 }

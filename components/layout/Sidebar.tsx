@@ -1,7 +1,7 @@
 'use client';
 
 import { MenuItem } from '@/lib/constants';
-import { Home, PlusCircle, History, Database, Settings, Info } from 'lucide-react';
+import { Home, PlusCircle, History, Database, Settings, Info, Scissors } from 'lucide-react';
 
 const icons: Record<string, typeof Home> = {
   dashboard: Home,
@@ -9,6 +9,7 @@ const icons: Record<string, typeof Home> = {
   riwayat: History,
   backup: Database,
   about: Info,
+  cutoff: Scissors,
   settings: Settings,
 };
 

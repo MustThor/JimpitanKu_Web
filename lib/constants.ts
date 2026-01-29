@@ -11,6 +11,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'riwayat', label: 'Riwayat', href: '/riwayat' },
   { id: 'backup', label: 'Backup', href: '/backup' },
   { id: 'about', label: 'Tentang Aplikasi', href: '/about' },
+  { id: 'cutoff', label: 'Cut Off', href: '/cutoff', adminOnly: true },
   { id: 'settings', label: 'Settings', href: '/settings', adminOnly: true },
 ];
 

@@ -19,9 +19,9 @@ import { exportWeeklySummaryToPDF, exportWeeklySummaryToExcel } from '@/lib/util
 
 export default function RiwayatPage() {
   const { darkMode, toggleTheme } = useTheme();
-  const { data, loading, deleteJimpitan, getWeeklyData } = useJimpitan();
   const { appName } = useAppSettings();
   const { isAdmin } = useAuth();
+  const { data, loading, deleteJimpitan, getWeeklyData } = useJimpitan(isAdmin());
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

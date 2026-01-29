@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { WeeklyChart } from '@/components/dashboard/WeeklyChart';
+import { DailyBarChart } from '@/components/dashboard/DailyBarChart';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,6 +16,7 @@ import { PhotoThumbnail } from '@/components/ui/PhotoThumbnail';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useTheme } from '@/hooks/useTheme';
 import { useJimpitan } from '@/hooks/useJimpitan';
+import { useCutoff } from '@/hooks/useCutoff';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { MENU_ITEMS } from '@/lib/constants';
@@ -24,9 +26,10 @@ import { exportToPDF, exportToExcel } from '@/lib/utils/export';
 
 export default function DashboardPage() {
   const { darkMode, toggleTheme } = useTheme();
-  const { data, loading, getTotalByPeriod, getTotalThisWeek, getWeeklyData, addJimpitan } = useJimpitan();
   const { appName } = useAppSettings();
   const { isAdmin } = useAuth();
+  const { data, loading: jimpitanLoading, getTotalByPeriod, getTotalThisWeek, getWeeklyData, getDailyTotalByDayOfWeek, addJimpitan } = useJimpitan(isAdmin());
+  const { totalPemasukan, loading: cutoffLoading } = useCutoff();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,12 +37,27 @@ export default function DashboardPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const getDayName = (dateString: string) => {
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const date = new Date(dateString);
+    return days[date.getDay()];
+  };
+
+  const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = useState({
     amount: '',
-    collection_date: new Date().toISOString().split('T')[0],
-    notes: '',
+    collection_date: today,
+    notes: getDayName(today),
     photo: null as File | null,
   });
+
+  const handleDateChange = (dateValue: string) => {
+    setFormData({
+      ...formData,
+      collection_date: dateValue,
+      notes: getDayName(dateValue),
+    });
+  };
 
   const currentPage = 'dashboard';
 
@@ -64,11 +82,12 @@ export default function DashboardPage() {
 
   const years = [2026, 2027, 2028, 2029, 2030];
 
-  const totalAll = getTotalByPeriod();
+  const loading = jimpitanLoading || cutoffLoading;
   const totalThisMonth = getTotalByPeriod(selectedMonth, selectedYear);
   const totalThisWeek = getTotalThisWeek();
 
   const weeklyChartData = getWeeklyData(selectedMonth, selectedYear);
+  const dailyChartData = getDailyTotalByDayOfWeek(selectedMonth, selectedYear);
 
   const recentEntries = data.slice(0, 5);
 
@@ -96,10 +115,11 @@ export default function DashboardPage() {
 
     if (result.success) {
       setSuccessMessage('Jimpitan berhasil ditambahkan!');
+      const resetDate = new Date().toISOString().split('T')[0];
       setFormData({
         amount: '',
-        collection_date: new Date().toISOString().split('T')[0],
-        notes: '',
+        collection_date: resetDate,
+        notes: getDayName(resetDate),
         photo: null,
       });
       setTimeout(() => {
@@ -165,7 +185,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
                   title="Total Pemasukan"
-                  value={totalAll}
+                  value={totalPemasukan}
                   icon={DollarSign}
                   color="bg-gradient-to-br from-blue-500 to-blue-600"
                   darkMode={darkMode}
@@ -250,6 +270,18 @@ export default function DashboardPage() {
               </div>
 
               <div className={`p-6 rounded-2xl shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Total Pemasukan Per Hari
+                  </h3>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Akumulasi per hari (Senin - Minggu)
+                  </p>
+                </div>
+                <DailyBarChart data={dailyChartData} darkMode={darkMode} />
+              </div>
+
+              <div className={`p-6 rounded-2xl shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   Entri Terbaru
                 </h3>
@@ -326,36 +358,18 @@ export default function DashboardPage() {
               label="Tanggal"
               type="date"
               value={formData.collection_date}
-              onChange={(e) => setFormData({ ...formData, collection_date: e.target.value })}
+              onChange={(e) => handleDateChange(e.target.value)}
               error={errors.collection_date}
               required
             />
 
             <div>
               <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Hari Pengumpulan <span className="text-red-500">*</span>
+                Hari Pengumpulan
               </label>
-              <div className="grid grid-cols-4 gap-2">
-                {['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].map((day) => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, notes: day })}
-                    className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border-2
-                      ${formData.notes === day
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-transparent shadow-lg scale-105'
-                        : darkMode
-                          ? 'bg-gray-700 text-gray-300 border-gray-600 hover:border-blue-500 hover:bg-gray-600'
-                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-blue-500 hover:bg-blue-50'
-                      }`}
-                  >
-                    {day}
-                  </button>
-                ))}
+              <div className={`px-4 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white inline-block`}>
+                {formData.notes}
               </div>
-              {errors.notes && (
-                <p className="mt-2 text-sm text-red-500">{errors.notes}</p>
-              )}
             </div>
 
             <PhotoUpload

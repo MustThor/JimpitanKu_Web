@@ -19,18 +19,33 @@ import { formatRupiah, formatShortDate } from '@/lib/utils/format';
 
 export default function InputPage() {
   const { darkMode, toggleTheme } = useTheme();
-  const { data, loading, addJimpitan } = useJimpitan();
   const { appName } = useAppSettings();
   const { isAdmin } = useAuth();
+  const { data, loading, addJimpitan } = useJimpitan(isAdmin());
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const getDayName = (dateString: string) => {
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const date = new Date(dateString);
+    return days[date.getDay()];
+  };
+
+  const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = useState({
     amount: '',
-    collection_date: new Date().toISOString().split('T')[0],
-    notes: '',
+    collection_date: today,
+    notes: getDayName(today),
     photo: null as File | null,
   });
+
+  const handleDateChange = (dateValue: string) => {
+    setFormData({
+      ...formData,
+      collection_date: dateValue,
+      notes: getDayName(dateValue),
+    });
+  };
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -136,36 +151,18 @@ export default function InputPage() {
                     label="Tanggal"
                     type="date"
                     value={formData.collection_date}
-                    onChange={(e) => setFormData({ ...formData, collection_date: e.target.value })}
+                    onChange={(e) => handleDateChange(e.target.value)}
                     error={errors.collection_date}
                     required
                   />
 
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Hari Pengumpulan <span className="text-red-500">*</span>
+                      Hari Pengumpulan
                     </label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, notes: day })}
-                          className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border-2
-                            ${formData.notes === day
-                              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-transparent shadow-lg scale-105'
-                              : darkMode
-                                ? 'bg-gray-700 text-gray-300 border-gray-600 hover:border-blue-500 hover:bg-gray-600'
-                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-blue-500 hover:bg-blue-50'
-                            }`}
-                        >
-                          {day}
-                        </button>
-                      ))}
+                    <div className={`px-4 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white inline-block`}>
+                      {formData.notes}
                     </div>
-                    {errors.notes && (
-                      <p className="mt-2 text-sm text-red-500">{errors.notes}</p>
-                    )}
                   </div>
 
                   <PhotoUpload

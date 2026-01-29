@@ -33,7 +33,7 @@ export const formatDateTime = (dateString: string): string => {
   });
 };
 
-// Get week info based on calendar system (week belongs to the month where Sunday falls)
+// Get week info based on calendar system (week Monday-Sunday, belongs to the month where MONDAY falls)
 export interface WeekInfo {
   weekNumber: number;
   month: number;  // 1-12
@@ -41,31 +41,54 @@ export interface WeekInfo {
 }
 
 export const getWeekInfo = (date: Date): WeekInfo => {
-  // Find the Sunday of the week this date belongs to
-  const dayOfWeek = date.getDay(); // 0 = Sunday
-  const sundayDate = new Date(date);
-  sundayDate.setDate(date.getDate() - dayOfWeek);
-  
-  // The week "belongs" to the month where the Sunday falls
-  const sundayMonth = sundayDate.getMonth() + 1; // 1-12
-  const sundayYear = sundayDate.getFullYear();
-  
-  // Calculate which week number within that month
-  const firstDayOfSundayMonth = new Date(sundayYear, sundayMonth - 1, 1);
-  const firstDayOfWeek = firstDayOfSundayMonth.getDay();
-  const sundayDayOfMonth = sundayDate.getDate();
-  
-  let weekNumber: number;
-  if (firstDayOfWeek === 0) {
-    // Month starts on Sunday
-    weekNumber = Math.ceil(sundayDayOfMonth / 7);
+  // Find the Monday of the week this date belongs to (start of week in Monday-Sunday system)
+  const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const mondayDate = new Date(date);
+  if (dayOfWeek === 0) {
+    // Sunday - go back 6 days to Monday
+    mondayDate.setDate(date.getDate() - 6);
+  } else if (dayOfWeek === 1) {
+    // Already Monday, no change needed
   } else {
-    // Find the first Sunday of that month
-    const firstSundayDate = 8 - firstDayOfWeek;
-    weekNumber = Math.ceil((sundayDayOfMonth - firstSundayDate) / 7) + 1;
+    // Go back to Monday (dayOfWeek - 1 days)
+    mondayDate.setDate(date.getDate() - (dayOfWeek - 1));
   }
   
-  return { weekNumber, month: sundayMonth, year: sundayYear };
+  // The week "belongs" to the month where the Monday (start of week) falls
+  const mondayMonth = mondayDate.getMonth() + 1; // 1-12
+  const mondayYear = mondayDate.getFullYear();
+  
+  // Calculate which week number within that month
+  // Find the first Monday of the Monday's month
+  const firstDayOfMondayMonth = new Date(mondayYear, mondayMonth - 1, 1);
+  const firstDayOfWeek = firstDayOfMondayMonth.getDay(); // 0 = Sunday
+  
+  // Find the first Monday of that month
+  let firstMondayDate: number;
+  if (firstDayOfWeek === 0) {
+    // Month starts on Sunday, first Monday is the 2nd
+    firstMondayDate = 2;
+  } else if (firstDayOfWeek === 1) {
+    // Month starts on Monday
+    firstMondayDate = 1;
+  } else {
+    // Find next Monday
+    firstMondayDate = 1 + (8 - firstDayOfWeek);
+  }
+  
+  const mondayDayOfMonth = mondayDate.getDate();
+  
+  let weekNumber: number;
+  if (mondayDayOfMonth < firstMondayDate) {
+    // This Monday is before the first Monday of the month - it's part of last week of previous month
+    // This shouldn't happen normally since we're looking at the Monday's month
+    weekNumber = 1;
+  } else {
+    // Calculate week number based on how many complete weeks since first Monday
+    weekNumber = Math.ceil((mondayDayOfMonth - firstMondayDate + 1) / 7);
+  }
+  
+  return { weekNumber, month: mondayMonth, year: mondayYear };
 };
 
 // Legacy function - returns just week number for backward compatibility
@@ -74,7 +97,7 @@ export const getWeekNumber = (date: Date): number => {
 };
 
 export const getMonthAndYear = (date: Date): { month: number; year: number } => {
-  // Returns the month/year based on the week's Sunday
+  // Returns the month/year based on the week's Monday
   const weekInfo = getWeekInfo(date);
   return { month: weekInfo.month, year: weekInfo.year };
 };
@@ -98,52 +121,72 @@ export const getCalendarWeeksForMonth = (month: number, year: number): CalendarW
   const firstDayOfMonth = new Date(year, month - 1, 1);
   const lastDayOfMonth = new Date(year, month, 0);
   
-  // If month doesn't start on Sunday, include the partial week from previous month
-  if (firstDayOfMonth.getDay() !== 0) {
-    // Find the Sunday that starts this partial week
-    const prevSunday = new Date(firstDayOfMonth);
-    prevSunday.setDate(1 - firstDayOfMonth.getDay());
+  // If month doesn't start on Monday, include the partial week from previous month
+  // This week belongs to the PREVIOUS month (where Monday falls)
+  if (firstDayOfMonth.getDay() !== 1) {
+    // Find the Monday that starts this partial week (in previous month)
+    const prevMonday = new Date(firstDayOfMonth);
+    const dayOfWeek = firstDayOfMonth.getDay();
+    if (dayOfWeek === 0) {
+      // Sunday - go back 6 days to Monday
+      prevMonday.setDate(1 - 6);
+    } else {
+      // Go back to Monday (dayOfWeek - 1 days)
+      prevMonday.setDate(1 - (dayOfWeek - 1));
+    }
     
-    const weekInfo = getWeekInfo(prevSunday);
-    const weekEnd = new Date(prevSunday);
-    weekEnd.setDate(prevSunday.getDate() + 6);
+    const weekEnd = new Date(prevMonday);
+    weekEnd.setDate(prevMonday.getDate() + 6); // Sunday
     
-    weeks.push({
-      weekNumber: weekInfo.weekNumber,
-      belongsToMonth: weekInfo.month,
-      belongsToYear: weekInfo.year,
-      startDate: prevSunday,
-      endDate: weekEnd,
-      label: `Minggu ${weekInfo.weekNumber} ${MONTH_NAMES[weekInfo.month]} (${prevSunday.getDate()}-${weekEnd.getDate()})`
-    });
-  }
-  
-  // Find the first Sunday on or after the first day of the month
-  let currentSunday = new Date(firstDayOfMonth);
-  if (currentSunday.getDay() !== 0) {
-    currentSunday.setDate(currentSunday.getDate() + (7 - currentSunday.getDay()));
-  }
-  
-  // Iterate through all Sundays in this month
-  while (currentSunday <= lastDayOfMonth) {
-    const weekInfo = getWeekInfo(currentSunday);
-    const weekEnd = new Date(currentSunday);
-    weekEnd.setDate(currentSunday.getDate() + 6);
-    
-    const displayStart = currentSunday.getDate();
-    const displayEnd = weekEnd.getMonth() === month - 1 ? weekEnd.getDate() : lastDayOfMonth.getDate();
+    const weekInfo = getWeekInfo(prevMonday); // Week belongs to month where MONDAY falls
     
     weeks.push({
       weekNumber: weekInfo.weekNumber,
       belongsToMonth: weekInfo.month,
       belongsToYear: weekInfo.year,
-      startDate: new Date(currentSunday),
+      startDate: new Date(prevMonday),
       endDate: weekEnd,
-      label: `Minggu ${weekInfo.weekNumber} (${displayStart}-${displayEnd})`
+      label: `Minggu ${weekInfo.weekNumber} ${MONTH_NAMES[weekInfo.month]} (${prevMonday.getDate()}-${weekEnd.getDate()})`
     });
+  }
+  
+  // Find the first Monday on or after the first day of the month
+  let currentMonday = new Date(firstDayOfMonth);
+  const firstDayOfWeek = currentMonday.getDay();
+  if (firstDayOfWeek !== 1) {
+    if (firstDayOfWeek === 0) {
+      // Sunday - next Monday is tomorrow
+      currentMonday.setDate(currentMonday.getDate() + 1);
+    } else {
+      // Move forward to next Monday
+      currentMonday.setDate(currentMonday.getDate() + (8 - firstDayOfWeek));
+    }
+  }
+  
+  // Iterate through all Mondays in this month
+  while (currentMonday <= lastDayOfMonth) {
+    const weekEnd = new Date(currentMonday);
+    weekEnd.setDate(currentMonday.getDate() + 6); // Sunday
     
-    // Move to next Sunday
-    currentSunday.setDate(currentSunday.getDate() + 7);
+    const weekInfo = getWeekInfo(currentMonday); // Week belongs to month where MONDAY falls
+    
+    // Only include if the Monday falls in the current month
+    if (weekInfo.month === month && weekInfo.year === year) {
+      const displayStart = currentMonday.getDate();
+      const displayEnd = weekEnd.getMonth() === month - 1 ? weekEnd.getDate() : weekEnd.getDate();
+      
+      weeks.push({
+        weekNumber: weekInfo.weekNumber,
+        belongsToMonth: weekInfo.month,
+        belongsToYear: weekInfo.year,
+        startDate: new Date(currentMonday),
+        endDate: weekEnd,
+        label: `Minggu ${weekInfo.weekNumber} (${displayStart}-${displayEnd})`
+      });
+    }
+    
+    // Move to next Monday
+    currentMonday.setDate(currentMonday.getDate() + 7);
   }
   
   return weeks;

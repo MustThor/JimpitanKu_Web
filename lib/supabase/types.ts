@@ -7,6 +7,16 @@ export interface Jimpitan {
   year: number | null;
   notes: string | null;
   photo_url: string | null;
+  is_archived: boolean;
+  created_at: string;
+}
+
+export interface CutoffHistory {
+  id: string;
+  cutoff_date: string;
+  amount: number;
+  period_month: number;
+  period_year: number;
   created_at: string;
 }
 
