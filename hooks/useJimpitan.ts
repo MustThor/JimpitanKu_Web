@@ -154,6 +154,14 @@ export function useJimpitan() {
       .reduce((sum, item) => sum + item.amount, 0);
   };
 
+  // Helper function to format date as YYYY-MM-DD in local timezone
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const getTotalThisWeek = () => {
     const now = new Date();
     // Find the Sunday of the current week
@@ -166,8 +174,9 @@ export function useJimpitan() {
     weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
     
-    const weekStartStr = weekStart.toISOString().split('T')[0];
-    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    // Use local date format instead of toISOString() to avoid UTC conversion
+    const weekStartStr = formatLocalDate(weekStart);
+    const weekEndStr = formatLocalDate(weekEnd);
     
     return data
       .filter(item => item.collection_date >= weekStartStr && item.collection_date <= weekEndStr)
@@ -180,8 +189,9 @@ export function useJimpitan() {
     return calendarWeeks.map(week => {
       // Use date range filtering instead of stored week_number/month/year
       // This handles cases where old data has incorrect stored values
-      const weekStart = week.startDate.toISOString().split('T')[0];
-      const weekEnd = week.endDate.toISOString().split('T')[0];
+      // Use local date format to avoid UTC timezone conversion issues
+      const weekStart = formatLocalDate(week.startDate);
+      const weekEnd = formatLocalDate(week.endDate);
       
       const matchingData = data.filter(d => {
         const collectionDate = d.collection_date;
