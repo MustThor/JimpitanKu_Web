@@ -331,7 +331,7 @@ export default function DashboardPage() {
                 Hari Pengumpulan <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => (
+                {['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].map((day) => (
                   <button
                     key={day}
                     type="button"
