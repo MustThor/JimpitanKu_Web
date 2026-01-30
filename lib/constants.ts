@@ -12,7 +12,8 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'backup', label: 'Backup', href: '/backup' },
   { id: 'about', label: 'Tentang Aplikasi', href: '/about' },
   { id: 'cutoff', label: 'Cut Off', href: '/cutoff', adminOnly: true },
-  { id: 'settings', label: 'Settings', href: '/settings', adminOnly: true },
+  // TEMPORARILY HIDDEN - Uncomment the line below to restore settings menu
+  // { id: 'settings', label: 'Settings', href: '/settings', adminOnly: true },
 ];
 
 export const MONTHS = [
