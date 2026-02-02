@@ -8,9 +8,10 @@ interface PhotoUploadProps {
   onChange: (file: File | null) => void;
   error?: string;
   darkMode?: boolean;
+  label?: string;
 }
 
-export function PhotoUpload({ value, onChange, error, darkMode }: PhotoUploadProps) {
+export function PhotoUpload({ value, onChange, error, darkMode, label = 'Foto Bukti' }: PhotoUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +71,7 @@ export function PhotoUpload({ value, onChange, error, darkMode }: PhotoUploadPro
   return (
     <div className="space-y-2">
       <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-        Foto Bukti
+        {label}
       </label>
 
       {preview ? (
