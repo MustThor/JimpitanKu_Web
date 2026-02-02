@@ -67,7 +67,7 @@ export default function CutoffPage() {
     setIsModalOpen(false);
 
     if (result.success) {
-      setSuccessMessage(`Cut off berhasil! ${formatRupiah(totalThisMonth)} telah ditambahkan ke Total Pemasukan.`);
+      setSuccessMessage(`Cut off berhasil! ${formatRupiah(totalThisMonth)} telah ditambahkan ke Total Pemasukan Bulan Sebelumnya.`);
       // Refresh jimpitan data to reflect archived records
       await fetchJimpitan(false);
       setTimeout(() => setSuccessMessage(''), 5000);
@@ -189,7 +189,7 @@ export default function CutoffPage() {
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <StatCard
-                    title="Total Pemasukan"
+                    title="Total Pemasukan Bulan Sebelumnya"
                     value={totalPemasukan}
                     icon={DollarSign}
                     color="bg-gradient-to-br from-blue-500 to-blue-600"
@@ -360,7 +360,7 @@ export default function CutoffPage() {
                   Perhatian!
                 </p>
                 <p className={`text-sm mt-1 ${darkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>
-                  Tindakan ini akan mengarsipkan semua data jimpitan periode {formatPeriod(selectedMonth, selectedYear)} dan menambahkan {formatRupiah(totalThisMonth)} ke Total Pemasukan.
+                  Tindakan ini akan mengarsipkan semua data jimpitan periode {formatPeriod(selectedMonth, selectedYear)} dan menambahkan {formatRupiah(totalThisMonth)} ke Total Pemasukan Bulan Sebelumnya.
                 </p>
               </div>
             </div>
@@ -419,7 +419,7 @@ export default function CutoffPage() {
                   Perhatian!
                 </p>
                 <p className={`text-sm mt-1 ${darkMode ? 'text-red-300' : 'text-red-700'}`}>
-                  Tindakan ini akan menghapus cut off dan mengurangi Total Pemasukan sebesar {selectedCutoff ? formatRupiah(selectedCutoff.amount) : 'Rp 0'}.
+                  Tindakan ini akan menghapus cut off dan mengurangi Total Pemasukan Bulan Sebelumnya sebesar {selectedCutoff ? formatRupiah(selectedCutoff.amount) : 'Rp 0'}.
                   Data jimpitan periode tersebut akan dikembalikan (unarchive).
                 </p>
               </div>

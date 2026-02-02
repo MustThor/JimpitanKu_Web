@@ -44,7 +44,7 @@ export function DailyBarChart({ data, darkMode }: DailyBarChartProps) {
             tickFormatter={(v) => `${(v / 1000)}K`}
           />
           <Tooltip
-            formatter={(value) => [formatRupiah(value as number), 'Total Pemasukan']}
+            formatter={(value) => [formatRupiah(value as number), 'Total Pemasukan Bulan Sebelumnya']}
             contentStyle={{
               backgroundColor: darkMode ? '#1f2937' : '#ffffff',
               border: 'none',

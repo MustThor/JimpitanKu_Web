@@ -43,8 +43,8 @@ export function useCutoff() {
       }
       setTotalPemasukan(parseInt(data?.value || '0', 10));
     } catch (err) {
-      console.error('Error fetching total pemasukan:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch total pemasukan');
+      console.error('Error fetching total pemasukan bulan sebelumnya:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch total pemasukan bulan sebelumnya');
     }
   };
 
