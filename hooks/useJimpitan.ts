@@ -115,8 +115,13 @@ export function useJimpitan(isAdmin: boolean = false) {
 
   const deleteJimpitan = async (id: string) => {
     try {
-      // Get photo URL before deletion
+      // Get item before deletion
       const itemToDelete = data.find(item => item.id === id);
+
+      // Prevent deletion of archived data
+      if (itemToDelete?.is_archived) {
+        return { success: false, error: 'Data yang sudah di-cutoff tidak dapat dihapus' };
+      }
 
       const { error: deleteError } = await supabase
         .from('jimpitan')
@@ -144,6 +149,11 @@ export function useJimpitan(isAdmin: boolean = false) {
       const existingItem = data.find(item => item.id === id);
       if (!existingItem) {
         return { success: false, error: 'Data tidak ditemukan' };
+      }
+
+      // Prevent update of archived data
+      if (existingItem.is_archived) {
+        return { success: false, error: 'Data yang sudah di-cutoff tidak dapat diedit' };
       }
 
       let photoUrl = existingItem.photo_url;

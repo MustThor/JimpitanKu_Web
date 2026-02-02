@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2, ChevronLeft, ChevronRight, FileText, Table, Pencil } from 'lucide-react';
+import { Trash2, ChevronLeft, ChevronRight, FileText, Table, Pencil, Lock } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
@@ -293,22 +293,38 @@ export default function RiwayatPage() {
                               <PhotoThumbnail url={item.photo_url} darkMode={darkMode} size="sm" />
                             </td>
                             <td className="py-4 px-4 text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => handleEdit(item)}
-                                  className="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
-                                  title="Edit"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(item.id)}
-                                  className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                              {item.is_archived ? (
+                                <div className="flex items-center justify-center gap-2">
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                                      darkMode
+                                        ? 'bg-amber-500/20 text-amber-400'
+                                        : 'bg-amber-100 text-amber-700'
+                                    }`}
+                                    title="Data sudah di-cutoff dan tidak dapat diubah"
+                                  >
+                                    <Lock className="w-3.5 h-3.5" />
+                                    Dikunci
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => handleEdit(item)}
+                                    className="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(item.id)}
+                                    className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))
