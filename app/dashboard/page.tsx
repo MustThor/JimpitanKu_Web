@@ -184,7 +184,7 @@ export default function DashboardPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
-                  title="Total Pemasukan"
+                  title="Total Pemasukan Bulan Sebelumnya"
                   value={totalPemasukan}
                   icon={DollarSign}
                   color="bg-gradient-to-br from-blue-500 to-blue-600"
