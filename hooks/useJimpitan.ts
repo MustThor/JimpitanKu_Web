@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { Jimpitan, CreateJimpitanInput } from '@/lib/supabase/types';
+import { Jimpitan, CreateJimpitanInput, UpdateJimpitanInput } from '@/lib/supabase/types';
 import { getWeekInfo, getCalendarWeeksForMonth } from '@/lib/utils/format';
 import { uploadJimpitanPhoto, deleteJimpitanPhoto } from '@/lib/supabase/storage';
 import { createAutoBackup } from '@/hooks/useBackup';
@@ -134,6 +134,76 @@ export function useJimpitan(isAdmin: boolean = false) {
       return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete jimpitan';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const updateJimpitan = async (id: string, input: UpdateJimpitanInput & { photo?: File | null }) => {
+    try {
+      const existingItem = data.find(item => item.id === id);
+      if (!existingItem) {
+        return { success: false, error: 'Data tidak ditemukan' };
+      }
+
+      let photoUrl = existingItem.photo_url;
+
+      // Handle photo upload if new photo provided
+      if (input.photo) {
+        // Upload new photo
+        const uploadResult = await uploadJimpitanPhoto(input.photo, id);
+        if (!uploadResult.success) {
+          return { success: false, error: uploadResult.error || 'Gagal mengupload foto' };
+        }
+        // Delete old photo if exists
+        if (existingItem.photo_url) {
+          await deleteJimpitanPhoto(existingItem.photo_url);
+        }
+        photoUrl = uploadResult.url || null;
+      } else if (input.photo_url === null && existingItem.photo_url) {
+        // Photo explicitly removed
+        await deleteJimpitanPhoto(existingItem.photo_url);
+        photoUrl = null;
+      }
+
+      // Prepare update data
+      const updateData: Record<string, unknown> = {};
+      
+      if (input.amount !== undefined) {
+        updateData.amount = input.amount;
+      }
+      
+      if (input.collection_date !== undefined) {
+        updateData.collection_date = input.collection_date;
+        // Recalculate week info if date changed
+        const date = new Date(input.collection_date);
+        const weekInfo = getWeekInfo(date);
+        updateData.week_number = weekInfo.weekNumber;
+        updateData.month = weekInfo.month;
+        updateData.year = weekInfo.year;
+      }
+      
+      if (input.notes !== undefined) {
+        updateData.notes = input.notes || null;
+      }
+      
+      if (photoUrl !== existingItem.photo_url) {
+        updateData.photo_url = photoUrl;
+      }
+
+      const { data: updatedJimpitan, error: updateError } = await supabase
+        .from('jimpitan')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      setData(data.map(item => item.id === id ? updatedJimpitan : item));
+      return { success: true, data: updatedJimpitan };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update jimpitan';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -274,6 +344,7 @@ export function useJimpitan(isAdmin: boolean = false) {
     error,
     fetchJimpitan,
     addJimpitan,
+    updateJimpitan,
     deleteJimpitan,
     getFilteredData,
     getTotalByPeriod,
