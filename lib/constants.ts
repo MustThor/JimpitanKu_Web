@@ -9,7 +9,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
   { id: 'input', label: 'Input Jimpitan', href: '/input' },
   { id: 'riwayat', label: 'Riwayat', href: '/riwayat' },
-  { id: 'backup', label: 'Backup', href: '/backup' },
+  { id: 'backup', label: 'Backup', href: '/backup', adminOnly: true },
   { id: 'about', label: 'Tentang Aplikasi', href: '/about' },
   { id: 'cutoff', label: 'Cut Off', href: '/cutoff', adminOnly: true },
   // TEMPORARILY HIDDEN - Uncomment the line below to restore settings menu
