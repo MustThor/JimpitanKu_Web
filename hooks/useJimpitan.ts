@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import { Jimpitan, CreateJimpitanInput } from '@/lib/supabase/types';
 import { getWeekInfo, getCalendarWeeksForMonth } from '@/lib/utils/format';
 import { uploadJimpitanPhoto, deleteJimpitanPhoto } from '@/lib/supabase/storage';
+import { createAutoBackup } from '@/hooks/useBackup';
 
 export function useJimpitan(isAdmin: boolean = false) {
   const [data, setData] = useState<Jimpitan[]>([]);
@@ -39,6 +40,9 @@ export function useJimpitan(isAdmin: boolean = false) {
 
   const addJimpitan = async (input: CreateJimpitanInput) => {
     try {
+      // Create auto-backup before adding new data (snapshot before change)
+      await createAutoBackup();
+
       const date = new Date(input.collection_date);
       let photoUrl: string | null = null;
 

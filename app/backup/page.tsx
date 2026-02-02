@@ -102,16 +102,18 @@ export default function BackupPage() {
                     <strong>Info:</strong> Anda dapat membuat backup berkali-kali. Setiap backup akan memiliki nama unik berdasarkan waktu pembuatan.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Button
-                    onClick={handleCreateBackup}
-                    disabled={isCreating}
-                    className="flex items-center justify-center gap-3"
-                  >
-                    <Download className="w-5 h-5" />
-                    {isCreating ? 'Membuat...' : 'Buat Backup'}
-                  </Button>
-                </div>
+                {isAdmin() && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Button
+                      onClick={handleCreateBackup}
+                      disabled={isCreating}
+                      className="flex items-center justify-center gap-3"
+                    >
+                      <Download className="w-5 h-5" />
+                      {isCreating ? 'Membuat...' : 'Buat Backup'}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className={`p-6 rounded-2xl shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
@@ -148,14 +150,16 @@ export default function BackupPage() {
                           )}
                         </div>
                         <div className="flex gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleRestore(backup.id, backup.backup_name)}
-                            disabled={!!backup.restored_at}
-                          >
-                            <Upload className="w-4 h-4" />
-                          </Button>
+                          {isAdmin() && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleRestore(backup.id, backup.backup_name)}
+                              disabled={!!backup.restored_at}
+                            >
+                              <Upload className="w-4 h-4" />
+                            </Button>
+                          )}
                           {isAdmin() && (
                             <Button
                               variant="danger"

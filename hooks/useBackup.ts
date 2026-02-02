@@ -60,6 +60,54 @@ export function useBackup() {
     }
   };
 
+  const createAutoBackup = async () => {
+    try {
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const autoBackupName = `AutoBackup_${today}`;
+      
+      // Fetch current jimpitan data to backup
+      const { data: jimpitanData, error: fetchError } = await supabase
+        .from('jimpitan')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      // Check if today's auto-backup already exists
+      const { data: existingBackup } = await supabase
+        .from('backup_history')
+        .select('id')
+        .eq('backup_name', autoBackupName)
+        .maybeSingle();
+
+      if (existingBackup) {
+        // Update existing auto-backup
+        const { error: updateError } = await supabase
+          .from('backup_history')
+          .update({ backup_data: jimpitanData || [] })
+          .eq('id', existingBackup.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new auto-backup
+        const { error: insertError } = await supabase
+          .from('backup_history')
+          .insert({ 
+            backup_name: autoBackupName,
+            backup_data: jimpitanData || []
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create auto-backup';
+      console.error('Auto-backup error:', errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const restoreBackup = async (id: string) => {
     try {
       // First, fetch the backup data
@@ -137,7 +185,57 @@ export function useBackup() {
     error,
     fetchBackups,
     createBackup,
+    createAutoBackup,
     restoreBackup,
     deleteBackup,
   };
+}
+
+// Standalone auto-backup function for use in other hooks (e.g., useJimpitan)
+export async function createAutoBackup() {
+  try {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const autoBackupName = `AutoBackup_${today}`;
+    
+    // Fetch current jimpitan data to backup
+    const { data: jimpitanData, error: fetchError } = await supabase
+      .from('jimpitan')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (fetchError) throw fetchError;
+
+    // Check if today's auto-backup already exists
+    const { data: existingBackup } = await supabase
+      .from('backup_history')
+      .select('id')
+      .eq('backup_name', autoBackupName)
+      .maybeSingle();
+
+    if (existingBackup) {
+      // Update existing auto-backup
+      const { error: updateError } = await supabase
+        .from('backup_history')
+        .update({ backup_data: jimpitanData || [] })
+        .eq('id', existingBackup.id);
+
+      if (updateError) throw updateError;
+    } else {
+      // Create new auto-backup
+      const { error: insertError } = await supabase
+        .from('backup_history')
+        .insert({ 
+          backup_name: autoBackupName,
+          backup_data: jimpitanData || []
+        });
+
+      if (insertError) throw insertError;
+    }
+
+    return { success: true };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to create auto-backup';
+    console.error('Auto-backup error:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
 }
