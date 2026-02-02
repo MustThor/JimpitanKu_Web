@@ -282,6 +282,26 @@ export function useJimpitan(isAdmin: boolean = false) {
   };
 
   const getWeeklyData = (month: number, year: number) => {
+    // Special case: month === 0 means "Semua Bulan" (all months)
+    // Return monthly summaries instead of weekly data
+    if (month === 0) {
+      const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      
+      return monthNames.map((monthName, index) => {
+        const monthNum = index + 1;
+        const monthData = data.filter(item => {
+          const date = new Date(item.collection_date);
+          return (date.getMonth() + 1) === monthNum && date.getFullYear() === year;
+        });
+        
+        return {
+          week: monthName,
+          amount: monthData.reduce((sum, item) => sum + item.amount, 0),
+        };
+      });
+    }
+    
     const calendarWeeks = getCalendarWeeksForMonth(month, year);
     
     return calendarWeeks.map(week => {

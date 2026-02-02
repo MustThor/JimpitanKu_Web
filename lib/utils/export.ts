@@ -110,10 +110,11 @@ export const exportWeeklySummaryToPDF = (
   const doc = new jsPDF();
   
   // Header
+  const periodLabel = month === 0 ? `Semua Bulan ${year}` : `${month}/${year}`;
   doc.setFontSize(20);
   doc.text(appName, 14, 20);
   doc.setFontSize(12);
-  doc.text(`Ringkasan Mingguan - ${month}/${year}`, 14, 30);
+  doc.text(`Ringkasan Mingguan - ${periodLabel}`, 14, 30);
   
   // Table data
   const tableData = weeklyData.map((item) => [
@@ -137,7 +138,8 @@ export const exportWeeklySummaryToPDF = (
   });
   
   // Save
-  doc.save(`ringkasan-mingguan-${month}-${year}.pdf`);
+  const filename = month === 0 ? `ringkasan-tahunan-${year}.pdf` : `ringkasan-mingguan-${month}-${year}.pdf`;
+  doc.save(filename);
 };
 
 /**
@@ -152,9 +154,10 @@ export const exportWeeklySummaryToExcel = (
   year: number
 ) => {
   // Prepare data
+  const periodLabel = month === 0 ? `Semua Bulan ${year}` : `${month}/${year}`;
   const worksheetData = [
     ['Ringkasan Mingguan'],
-    [`Periode: ${month}/${year}`],
+    [`Periode: ${periodLabel}`],
     [],
     ['Minggu', 'Jumlah'],
     ...weeklyData.map((item) => [
@@ -178,5 +181,6 @@ export const exportWeeklySummaryToExcel = (
   XLSX.utils.book_append_sheet(wb, ws, 'Ringkasan Mingguan');
   
   // Save
-  XLSX.writeFile(wb, `ringkasan-mingguan-${month}-${year}.xlsx`);
+  const filename = month === 0 ? `ringkasan-tahunan-${year}.xlsx` : `ringkasan-mingguan-${month}-${year}.xlsx`;
+  XLSX.writeFile(wb, filename);
 };

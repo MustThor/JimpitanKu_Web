@@ -49,8 +49,15 @@ export default function RiwayatPage() {
   const [successMessage, setSuccessMessage] = useState('');
 
   // For regular users, show all data (no filter). For admin, filter by month/year.
+  // filterMonth === 0 means "Semua Bulan" (all months)
   const filteredData = isAdmin()
-    ? data.filter((item) => item.month === filterMonth && item.year === filterYear)
+    ? data.filter((item) => {
+        if (filterMonth === 0) {
+          // Show all months for the selected year
+          return item.year === filterYear;
+        }
+        return item.month === filterMonth && item.year === filterYear;
+      })
     : data;
 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
@@ -166,10 +173,13 @@ export default function RiwayatPage() {
     exportWeeklySummaryToExcel(weeklyDataForExport, filterMonth, filterYear);
   };
 
-  const monthOptions = MONTHS.map((month, index) => ({
-    value: (index + 1).toString(),
-    label: month,
-  }));
+  const monthOptions = [
+    { value: '0', label: 'Semua Bulan' },
+    ...MONTHS.map((month, index) => ({
+      value: (index + 1).toString(),
+      label: month,
+    })),
+  ];
 
   const yearOptions = [
     { value: '2025', label: '2025' },
