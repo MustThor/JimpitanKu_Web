@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DollarSign, Calendar, TrendingUp, Scissors, AlertTriangle } from 'lucide-react';
+import { DollarSign, Calendar, TrendingUp, Scissors, AlertTriangle, Trash2 } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -14,21 +14,30 @@ import { useJimpitan } from '@/hooks/useJimpitan';
 import { useCutoff } from '@/hooks/useCutoff';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { supabase } from '@/lib/supabase/client';
+import { CutoffHistory } from '@/lib/supabase/types';
 import { MENU_ITEMS, MONTHS } from '@/lib/constants';
 import { formatRupiah } from '@/lib/utils/format';
 
 export default function CutoffPage() {
   const { darkMode, toggleTheme } = useTheme();
   const { appName } = useAppSettings();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { data, loading: jimpitanLoading, getTotalByPeriod, getTotalThisWeek, fetchJimpitan } = useJimpitan(isAdmin());
-  const { cutoffHistory, totalPemasukan, loading: cutoffLoading, performCutoff, refetch } = useCutoff();
+  const { cutoffHistory, totalPemasukan, loading: cutoffLoading, performCutoff, deleteCutoff, refetch } = useCutoff();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedCutoff, setSelectedCutoff] = useState<CutoffHistory | null>(null);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
@@ -81,6 +90,54 @@ export default function CutoffPage() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const handleDeleteClick = (cutoff: CutoffHistory) => {
+    setSelectedCutoff(cutoff);
+    setDeletePassword('');
+    setPasswordError('');
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedCutoff || !user?.email) return;
+
+    setIsDeleting(true);
+    setPasswordError('');
+
+    // Verify password
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: deletePassword,
+    });
+
+    if (authError) {
+      setPasswordError('Password salah');
+      setIsDeleting(false);
+      return;
+    }
+
+    // Delete cutoff
+    const result = await deleteCutoff(
+      selectedCutoff.id,
+      selectedCutoff.amount,
+      selectedCutoff.period_month,
+      selectedCutoff.period_year
+    );
+
+    setIsDeleting(false);
+    setIsDeleteModalOpen(false);
+    setSelectedCutoff(null);
+    setDeletePassword('');
+
+    if (result.success) {
+      setSuccessMessage(`Cut off periode ${formatPeriod(selectedCutoff.period_month, selectedCutoff.period_year)} berhasil dihapus.`);
+      await fetchJimpitan(false);
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } else {
+      setErrorMessage(result.error || 'Gagal menghapus cut off');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
   };
 
   if (!isAdmin()) {
@@ -243,6 +300,9 @@ export default function CutoffPage() {
                             <th className={`px-4 py-3 text-right text-sm font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                               Jumlah
                             </th>
+                            <th className={`px-4 py-3 text-center text-sm font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                              Aksi
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -259,6 +319,15 @@ export default function CutoffPage() {
                               </td>
                               <td className={`px-4 py-3 text-sm text-right font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {formatRupiah(item.amount)}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <button
+                                  onClick={() => handleDeleteClick(item)}
+                                  className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-red-900/30 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
+                                  title="Hapus Cut Off"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -325,6 +394,93 @@ export default function CutoffPage() {
                 className="flex-1"
               >
                 {isProcessing ? 'Memproses...' : 'Ya, Cut Off'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedCutoff(null);
+            setDeletePassword('');
+            setPasswordError('');
+          }}
+          title="Konfirmasi Hapus Cut Off"
+          darkMode={darkMode}
+        >
+          <div className="space-y-4">
+            <div className={`flex items-start gap-3 p-4 rounded-xl ${darkMode ? 'bg-red-900/30' : 'bg-red-50'}`}>
+              <AlertTriangle className={`w-5 h-5 mt-0.5 ${darkMode ? 'text-red-400' : 'text-red-600'}`} />
+              <div>
+                <p className={`font-medium ${darkMode ? 'text-red-200' : 'text-red-800'}`}>
+                  Perhatian!
+                </p>
+                <p className={`text-sm mt-1 ${darkMode ? 'text-red-300' : 'text-red-700'}`}>
+                  Tindakan ini akan menghapus cut off dan mengurangi Total Pemasukan sebesar {selectedCutoff ? formatRupiah(selectedCutoff.amount) : 'Rp 0'}.
+                  Data jimpitan periode tersebut akan dikembalikan (unarchive).
+                </p>
+              </div>
+            </div>
+
+            {selectedCutoff && (
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <div className="flex justify-between items-center">
+                  <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Periode:</span>
+                  <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {formatPeriod(selectedCutoff.period_month, selectedCutoff.period_year)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Jumlah:</span>
+                  <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {formatRupiah(selectedCutoff.amount)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Masukkan Password untuk Konfirmasi
+              </label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="Password akun Anda"
+                className={`w-full px-4 py-2.5 rounded-xl text-sm border transition-colors
+                  ${darkMode
+                    ? 'bg-gray-700 text-white border-gray-600 focus:border-red-500'
+                    : 'bg-white text-gray-700 border-gray-300 focus:border-red-500'
+                  } focus:outline-none focus:ring-2 focus:ring-red-500/20`}
+              />
+              {passwordError && (
+                <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setSelectedCutoff(null);
+                  setDeletePassword('');
+                  setPasswordError('');
+                }}
+                className="flex-1"
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleConfirmDelete}
+                disabled={isDeleting || !deletePassword}
+                className="flex-1 !bg-red-600 hover:!bg-red-700"
+              >
+                {isDeleting ? 'Menghapus...' : 'Konfirmasi Hapus'}
               </Button>
             </div>
           </div>

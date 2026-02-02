@@ -109,6 +109,68 @@ export function useCutoff() {
     }
   };
 
+  const deleteCutoff = async (
+    id: string,
+    amount: number,
+    periodMonth: number,
+    periodYear: number
+  ) => {
+    try {
+      setError(null);
+
+      // 1. Delete cutoff history record
+      const { error: deleteError } = await supabase
+        .from('cutoff_history')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
+      }
+
+      // 2. Reduce total_pemasukan
+      const newTotal = Math.max(0, totalPemasukan - amount);
+      const { error: updateError } = await supabase
+        .from('pengaturan')
+        .upsert({
+          key: 'total_pemasukan',
+          value: String(newTotal),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+      if (updateError) {
+        console.error('Update total error:', updateError);
+        throw updateError;
+      }
+
+      // 3. Unarchive jimpitan for this period
+      const { error: unarchiveError } = await supabase
+        .from('jimpitan')
+        .update({ is_archived: false })
+        .eq('is_archived', true)
+        .gte('collection_date', `${periodYear}-${String(periodMonth).padStart(2, '0')}-01`)
+        .lt('collection_date', periodMonth === 12
+          ? `${periodYear + 1}-01-01`
+          : `${periodYear}-${String(periodMonth + 1).padStart(2, '0')}-01`);
+
+      if (unarchiveError) {
+        console.error('Unarchive error:', unarchiveError);
+        throw unarchiveError;
+      }
+
+      // 4. Refresh data
+      setTotalPemasukan(newTotal);
+      await fetchCutoffHistory();
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete cutoff';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const initialize = async () => {
     setLoading(true);
     await Promise.all([fetchCutoffHistory(), fetchTotalPemasukan()]);
@@ -125,6 +187,7 @@ export function useCutoff() {
     loading,
     error,
     performCutoff,
+    deleteCutoff,
     fetchCutoffHistory,
     fetchTotalPemasukan,
     refetch: initialize,
