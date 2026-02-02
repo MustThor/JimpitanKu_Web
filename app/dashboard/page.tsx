@@ -253,28 +253,30 @@ export default function DashboardPage() {
                       </span>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleExportDailyPDF}
-                      disabled={dailyDataForExport.length === 0}
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <FileText className="w-4 h-4" />
-                      PDF
-                    </Button>
-                    <Button
-                      onClick={handleExportDailyExcel}
-                      disabled={dailyDataForExport.length === 0}
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Table className="w-4 h-4" />
-                      Excel
-                    </Button>
-                  </div>
+                  {isAdmin() && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleExportDailyPDF}
+                        disabled={dailyDataForExport.length === 0}
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        PDF
+                      </Button>
+                      <Button
+                        onClick={handleExportDailyExcel}
+                        disabled={dailyDataForExport.length === 0}
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Table className="w-4 h-4" />
+                        Excel
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <WeeklyChart data={weeklyChartData} darkMode={darkMode} />
               </div>

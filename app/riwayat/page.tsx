@@ -30,9 +30,10 @@ export default function RiwayatPage() {
   const [filterYear, setFilterYear] = useState(now.getFullYear());
   const [currentTablePage, setCurrentTablePage] = useState(1);
 
-  const filteredData = data.filter(
-    (item) => item.month === filterMonth && item.year === filterYear
-  );
+  // For regular users, show all data (no filter). For admin, filter by month/year.
+  const filteredData = isAdmin()
+    ? data.filter((item) => item.month === filterMonth && item.year === filterYear)
+    : data;
 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const paginatedData = filteredData.slice(
@@ -115,48 +116,50 @@ export default function RiwayatPage() {
           ) : (
             <div className="space-y-6">
               <div className={`p-6 rounded-2xl shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <div className="flex-1">
-                    <Select
-                      label="Bulan"
-                      value={filterMonth.toString()}
-                      onChange={(e) => {
-                        setFilterMonth(parseInt(e.target.value, 10));
-                        setCurrentTablePage(1);
-                      }}
-                      options={monthOptions}
-                    />
+                {isAdmin() && (
+                  <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div className="flex-1">
+                      <Select
+                        label="Bulan"
+                        value={filterMonth.toString()}
+                        onChange={(e) => {
+                          setFilterMonth(parseInt(e.target.value, 10));
+                          setCurrentTablePage(1);
+                        }}
+                        options={monthOptions}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Select
+                        label="Tahun"
+                        value={filterYear.toString()}
+                        onChange={(e) => {
+                          setFilterYear(parseInt(e.target.value, 10));
+                          setCurrentTablePage(1);
+                        }}
+                        options={yearOptions}
+                      />
+                    </div>
+                    <div className="flex gap-2 items-end">
+                      <Button
+                        onClick={handleExportPDF}
+                        disabled={weeklyDataForExport.length === 0}
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        PDF
+                      </Button>
+                      <Button
+                        onClick={handleExportExcel}
+                        disabled={weeklyDataForExport.length === 0}
+                        className="flex items-center gap-2"
+                      >
+                        <Table className="w-4 h-4" />
+                        Excel
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <Select
-                      label="Tahun"
-                      value={filterYear.toString()}
-                      onChange={(e) => {
-                        setFilterYear(parseInt(e.target.value, 10));
-                        setCurrentTablePage(1);
-                      }}
-                      options={yearOptions}
-                    />
-                  </div>
-                  <div className="flex gap-2 items-end">
-                    <Button
-                      onClick={handleExportPDF}
-                      disabled={weeklyDataForExport.length === 0}
-                      className="flex items-center gap-2"
-                    >
-                      <FileText className="w-4 h-4" />
-                      PDF
-                    </Button>
-                    <Button
-                      onClick={handleExportExcel}
-                      disabled={weeklyDataForExport.length === 0}
-                      className="flex items-center gap-2"
-                    >
-                      <Table className="w-4 h-4" />
-                      Excel
-                    </Button>
-                  </div>
-                </div>
+                )}
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
