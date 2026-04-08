@@ -76,6 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isAdmin = () => {
+    const authEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTH === 'true';
+    if (!authEnabled) return true;
     return role === 'admin';
   };
 

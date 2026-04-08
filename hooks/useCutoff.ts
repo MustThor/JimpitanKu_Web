@@ -171,6 +171,58 @@ export function useCutoff() {
     }
   };
 
+  const resetAll = async () => {
+    try {
+      setError(null);
+
+      // 1. Reset total_pemasukan to 0
+      const { error: updateError } = await supabase
+        .from('pengaturan')
+        .upsert({
+          key: 'total_pemasukan',
+          value: '0',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+      if (updateError) {
+        console.error('Reset total error:', updateError);
+        throw updateError;
+      }
+
+      // 2. Delete all cutoff history
+      const { error: deleteError } = await supabase
+        .from('cutoff_history')
+        .delete()
+        .not('id', 'is', null);
+
+      if (deleteError) {
+        console.error('Delete history error:', deleteError);
+        throw deleteError;
+      }
+
+      // 3. Unarchive all jimpitan records
+      const { error: unarchiveError } = await supabase
+        .from('jimpitan')
+        .update({ is_archived: false })
+        .eq('is_archived', true);
+
+      if (unarchiveError) {
+        console.error('Unarchive all error:', unarchiveError);
+        throw unarchiveError;
+      }
+
+      // 4. Refresh data
+      setTotalPemasukan(0);
+      await fetchCutoffHistory();
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to reset all';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const initialize = async () => {
     setLoading(true);
     await Promise.all([fetchCutoffHistory(), fetchTotalPemasukan()]);
@@ -188,6 +240,7 @@ export function useCutoff() {
     error,
     performCutoff,
     deleteCutoff,
+    resetAll,
     fetchCutoffHistory,
     fetchTotalPemasukan,
     refetch: initialize,
