@@ -24,11 +24,13 @@ export default function CutoffPage() {
   const { appName } = useAppSettings();
   const { isAdmin, user } = useAuth();
   const { data, loading: jimpitanLoading, getTotalByPeriod, getTotalThisWeek, fetchJimpitan } = useJimpitan(isAdmin());
-  const { cutoffHistory, totalPemasukan, loading: cutoffLoading, performCutoff, deleteCutoff, refetch } = useCutoff();
+  const { cutoffHistory, totalPemasukan, loading: cutoffLoading, performCutoff, deleteCutoff, resetAll, refetch } = useCutoff();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -100,22 +102,26 @@ export default function CutoffPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedCutoff || !user?.email) return;
+    if (!selectedCutoff) return;
+
+    const authEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTH === 'true';
+
+    // Verify password only if auth is enabled
+    if (authEnabled && user?.email) {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: deletePassword,
+      });
+
+      if (authError) {
+        setPasswordError('Password salah');
+        setIsDeleting(false);
+        return;
+      }
+    }
 
     setIsDeleting(true);
     setPasswordError('');
-
-    // Verify password
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: deletePassword,
-    });
-
-    if (authError) {
-      setPasswordError('Password salah');
-      setIsDeleting(false);
-      return;
-    }
 
     // Delete cutoff
     const result = await deleteCutoff(
@@ -136,6 +142,23 @@ export default function CutoffPage() {
       setTimeout(() => setSuccessMessage(''), 5000);
     } else {
       setErrorMessage(result.error || 'Gagal menghapus cut off');
+      setTimeout(() => setErrorMessage(''), 5000);
+    }
+  };
+
+  const handleResetAll = async () => {
+    setIsResetting(true);
+    const result = await resetAll();
+
+    setIsResetting(false);
+    setIsResetModalOpen(false);
+
+    if (result.success) {
+      setSuccessMessage('Total Pemasukan Bulan Sebelumnya berhasil direset ke 0!');
+      await fetchJimpitan(false);
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } else {
+      setErrorMessage(result.error || 'Gagal mereset data');
       setTimeout(() => setErrorMessage(''), 5000);
     }
   };
@@ -210,6 +233,16 @@ export default function CutoffPage() {
                     darkMode={darkMode}
                   />
                 </div>
+
+                {totalPemasukan > 0 && (
+                  <Button
+                    onClick={() => setIsResetModalOpen(true)}
+                    variant="danger"
+                    className="w-full md:w-auto"
+                  >
+                    Reset Total Pemasukan Bulan Sebelumnya ke 0
+                  </Button>
+                )}
 
                 {/* Cutoff Section */}
                 <div className={`p-6 rounded-2xl shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
@@ -442,25 +475,27 @@ export default function CutoffPage() {
               </div>
             )}
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Masukkan Password untuk Konfirmasi
-              </label>
-              <input
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                placeholder="Password akun Anda"
-                className={`w-full px-4 py-2.5 rounded-xl text-sm border transition-colors
-                  ${darkMode
-                    ? 'bg-gray-700 text-white border-gray-600 focus:border-red-500'
-                    : 'bg-white text-gray-700 border-gray-300 focus:border-red-500'
-                  } focus:outline-none focus:ring-2 focus:ring-red-500/20`}
-              />
-              {passwordError && (
-                <p className="text-red-500 text-sm mt-2">{passwordError}</p>
-              )}
-            </div>
+            {process.env.NEXT_PUBLIC_ENABLE_AUTH === 'true' && (
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Masukkan Password untuk Konfirmasi
+                </label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Password akun Anda"
+                  className={`w-full px-4 py-2.5 rounded-xl text-sm border transition-colors
+                    ${darkMode
+                      ? 'bg-gray-700 text-white border-gray-600 focus:border-red-500'
+                      : 'bg-white text-gray-700 border-gray-300 focus:border-red-500'
+                    } focus:outline-none focus:ring-2 focus:ring-red-500/20`}
+                />
+                {passwordError && (
+                  <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+                )}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <Button
@@ -477,10 +512,69 @@ export default function CutoffPage() {
               </Button>
               <Button
                 onClick={handleConfirmDelete}
-                disabled={isDeleting || !deletePassword}
+                disabled={isDeleting || (process.env.NEXT_PUBLIC_ENABLE_AUTH === 'true' && !deletePassword)}
                 className="flex-1 !bg-red-600 hover:!bg-red-700"
               >
                 {isDeleting ? 'Menghapus...' : 'Konfirmasi Hapus'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Reset All Modal */}
+        <Modal
+          isOpen={isResetModalOpen}
+          onClose={() => setIsResetModalOpen(false)}
+          title="Reset Total Pemasukan Bulan Sebelumnya"
+          darkMode={darkMode}
+        >
+          <div className="space-y-4">
+            <div className={`flex items-start gap-3 p-4 rounded-xl ${darkMode ? 'bg-red-900/30' : 'bg-red-50'}`}>
+              <AlertTriangle className={`w-5 h-5 mt-0.5 ${darkMode ? 'text-red-400' : 'text-red-600'}`} />
+              <div>
+                <p className={`font-medium ${darkMode ? 'text-red-200' : 'text-red-800'}`}>
+                  Perhatian!
+                </p>
+                <p className={`text-sm mt-1 ${darkMode ? 'text-red-300' : 'text-red-700'}`}>
+                  Tindakan ini akan:
+                </p>
+                <ul className={`text-sm mt-2 list-disc list-inside ${darkMode ? 'text-red-300' : 'text-red-700'}`}>
+                  <li>Reset Total Pemasukan Bulan Sebelumnya menjadi 0</li>
+                  <li>Menghapus semua riwayat cut off</li>
+                  <li>Membuka semua data jimpitan yang di-archive</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+              <div className="flex justify-between items-center">
+                <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Total saat ini:</span>
+                <span className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {formatRupiah(totalPemasukan)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Total setelah reset:</span>
+                <span className={`font-bold text-green-600 ${darkMode ? 'text-green-400' : ''}`}>
+                  {formatRupiah(0)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setIsResetModalOpen(false)}
+                className="flex-1"
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleResetAll}
+                disabled={isResetting}
+                className="flex-1 !bg-red-600 hover:!bg-red-700"
+              >
+                {isResetting ? 'Mereset...' : 'Konfirmasi Reset'}
               </Button>
             </div>
           </div>
